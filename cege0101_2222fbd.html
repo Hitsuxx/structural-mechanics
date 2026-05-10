@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Free Body Diagrams — CEGE0101 Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false})"></script>
+<style>
+/* ═══ RESET ═══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ═══ THEME ═══ */
+:root{
+  --bg:       #030D1A;
+  --bg2:      #071525;
+  --bg3:      #0B1E35;
+  --bg4:      #0F2540;
+  --ink:      #E8F0F8;
+  --ink2:     #7A96B2;
+  --ink3:     #5C7A98;
+  --orange:   #FF7A1A;
+  --amber:    #FFB830;
+  --cyan:     #00C8F0;
+  --green:    #2DFFA0;
+  --red:      #FF4E5B;
+  --violet:   #9B72FF;
+  --border:   rgba(0,200,240,.18);
+  --border2:  rgba(0,200,240,.35);
+  --mono:     'JetBrains Mono',monospace;
+  --display:  'Bebas Neue',sans-serif;
+  --body:     'DM Sans',sans-serif;
+  --serif:    'Crimson Pro',serif;
+}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+
+/* ═══ GRID BACKGROUND ═══ */
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,200,240,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,240,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,120,200,.12),transparent),
+    radial-gradient(ellipse 50% 30% at 90% 90%,rgba(255,122,26,.07),transparent);
+}
+
+/* ═══ TOPBAR ═══ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(3,13,26,.95);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(0,200,240,.35);
+  display:flex;align-items:center;gap:1.2rem;
+  padding:0 1.5rem;height:52px;
+}
+.topbar-logo{
+  font-family:var(--display);
+  font-size:20px;letter-spacing:.08em;
+  color:var(--orange);flex-shrink:0;
+}
+.topbar-title{
+  font-family:var(--mono);font-size:11px;
+  color:var(--ink2);letter-spacing:.1em;
+  border-left:1px solid var(--ink3);
+  padding-left:1.2rem;
+}
+.topbar-back{
+  margin-left:auto;
+  font-family:var(--mono);font-size:10px;
+  color:var(--ink3);text-decoration:none;
+  padding:5px 12px;border:1px solid var(--ink3);border-radius:5px;
+  transition:all .2s;letter-spacing:.05em;
+}
+.topbar-back:hover{color:var(--cyan);border-color:var(--cyan);}
+
+/* ═══ NAV DOTS ═══ */
+.sidenav{
+  position:fixed;right:16px;top:50%;transform:translateY(-50%);
+  z-index:100;display:flex;flex-direction:column;gap:10px;
+}
+.snav-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--ink3);border:1px solid var(--border);
+  cursor:pointer;transition:all .2s;
+  position:relative;
+}
+.snav-dot:hover,.snav-dot.act{background:var(--orange);border-color:var(--orange);}
+.snav-dot::after{
+  content:attr(data-label);
+  position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  white-space:nowrap;font-family:var(--mono);font-size:9px;
+  color:var(--ink2);opacity:0;transition:opacity .2s;
+  pointer-events:none;
+}
+.snav-dot:hover::after{opacity:1;}
+@media(max-width:700px){.sidenav{display:none}}
+
+/* ═══ SECTIONS ═══ */
+.section{
+  position:relative;z-index:1;
+  max-width:900px;margin:0 auto;
+  padding:64px 1.5rem 48px;
+}
+.section+.section{
+  border-top:1px solid rgba(255,255,255,.05);
+}
+
+/* ═══ SECTION HEADERS ═══ */
+.sec-kicker{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.22em;color:var(--orange);
+  text-transform:uppercase;margin-bottom:.6rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.sec-kicker::before{
+  content:'';display:inline-block;
+  width:24px;height:1px;background:var(--orange);
+}
+.sec-h1{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,5vw,4rem);
+  line-height:1.05;letter-spacing:.04em;
+  color:var(--ink);margin-bottom:.6rem;
+}
+.sec-h2{
+  font-family:var(--display);
+  font-size:clamp(1.6rem,3vw,2.4rem);
+  letter-spacing:.06em;color:var(--ink);
+  margin-bottom:.5rem;
+}
+.sec-sub{
+  font-family:var(--mono);font-size:11px;
+  color:var(--ink2);letter-spacing:.1em;
+  margin-bottom:1.8rem;
+}
+.lead{
+  font-family:var(--serif);
+  font-size:1.15rem;line-height:1.75;
+  color:var(--ink2);margin-bottom:1.4rem;
+}
+
+/* ═══ CALL-OUT BOXES ═══ */
+.callout{
+  border-radius:0 8px 8px 0;
+  padding:.9rem 1.2rem;margin:1rem 0;
+  font-size:14px;line-height:1.65;
+}
+.callout-key{
+  background:rgba(255,122,26,.10);
+  border-left:3px solid var(--orange);
+  border:1px solid rgba(255,122,26,.35);
+  border-left:3px solid var(--orange);
+}
+.callout-info{
+  background:rgba(0,200,240,.09);
+  border:1px solid rgba(0,200,240,.30);
+  border-left:3px solid var(--cyan);
+}
+.callout-warn{
+  background:rgba(255,78,91,.09);
+  border:1px solid rgba(255,78,91,.30);
+  border-left:3px solid var(--red);
+}
+.callout-good{
+  background:rgba(45,255,160,.09);
+  border:1px solid rgba(45,255,160,.30);
+  border-left:3px solid var(--green);
+}
+.callout strong{font-weight:600;color:var(--orange);}
+.callout-info strong{color:var(--cyan);}
+.callout-warn strong{color:var(--red);}
+.callout-good strong{color:var(--green);}
+
+/* ═══ GRID LAYOUTS ═══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:.8rem 0;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:.8rem 0;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:.8rem 0;}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+@media(max-width:780px){.g3{grid-template-columns:1fr 1fr;}.g4{grid-template-columns:1fr 1fr;}}
+
+/* ═══ CARD ═══ */
+.card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:10px;padding:1rem 1.1rem;
+}
+.card-title{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;color:var(--orange);
+  text-transform:uppercase;margin-bottom:.5rem;
+}
+
+/* ═══ FORMULA DISPLAY ═══ */
+.fml{
+  background:var(--bg3);
+  border:1px solid rgba(0,200,240,.2);
+  border-radius:8px;padding:.8rem 1.2rem;
+  margin:.7rem 0;text-align:center;
+  font-size:1.05rem;
+}
+.fml-label{
+  font-family:var(--mono);font-size:9px;
+  color:var(--ink3);letter-spacing:.12em;
+  text-transform:uppercase;margin-bottom:.3rem;
+}
+.fml .katex-display{margin:.3em 0!important}
+
+/* ═══ CANVAS BOXES ═══ */
+.anim-box{
+  background:var(--bg2);
+  border:1px solid rgba(0,200,240,.35);
+  border-radius:10px;padding:1.2rem;
+  margin:1rem 0;
+}
+.anim-label{
+  font-family:var(--mono);font-size:9px;
+  color:var(--cyan);letter-spacing:.14em;
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:.9rem;
+}
+.anim-label::before{content:'◈';font-size:10px;color:var(--orange);}
+canvas{display:block;margin:0 auto;max-width:100%;}
+.ctrl-row{
+  display:flex;gap:7px;flex-wrap:wrap;
+  margin-top:.8rem;justify-content:center;
+}
+.cbtn{
+  font-family:var(--mono);font-size:10px;
+  padding:6px 14px;border-radius:6px;
+  border:1px solid rgba(0,200,240,.35);
+  background:rgba(0,200,240,.09);
+  color:var(--ink2);cursor:pointer;
+  transition:all .18s;letter-spacing:.05em;
+}
+.cbtn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,200,240,.1);}
+.cbtn.act{background:rgba(255,122,26,.12);border-color:var(--orange);color:var(--orange);}
+.anim-info{
+  font-family:var(--mono);font-size:10px;
+  color:var(--ink2);margin-top:.6rem;
+  text-align:center;min-height:24px;line-height:1.5;
+}
+
+/* ═══ STEP LIST ═══ */
+.steps-list{counter-reset:step;list-style:none;}
+.step-item{
+  display:flex;gap:1rem;padding:1rem 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.step-item:last-child{border-bottom:none;}
+.step-num{
+  flex-shrink:0;width:32px;height:32px;
+  border-radius:50%;
+  background:rgba(255,122,26,.1);
+  border:2px solid rgba(255,122,26,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;
+  color:var(--orange);margin-top:1px;
+  counter-increment:step;
+}
+.step-content{flex:1;}
+.step-title{
+  font-family:var(--mono);font-size:12px;
+  color:var(--ink);font-weight:700;
+  letter-spacing:.05em;margin-bottom:.3rem;
+}
+.step-desc{font-size:14px;color:var(--ink2);line-height:1.65;}
+.step-desc strong{color:var(--cyan);}
+
+/* ═══ SUPPORT TYPE CARDS ═══ */
+.support-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:1rem;
+  cursor:pointer;transition:all .22s;
+  text-align:center;
+}
+.support-card:hover,.support-card.sel{
+  border-color:var(--orange);
+  background:rgba(255,122,26,.06);
+  box-shadow:0 0 0 1px rgba(255,122,26,.15);
+}
+.support-card canvas{margin:.6rem auto;}
+.support-card-title{
+  font-family:var(--mono);font-size:10px;
+  color:var(--orange);letter-spacing:.1em;
+  margin-bottom:.3rem;text-transform:uppercase;
+}
+.support-card-desc{font-size:12px;color:var(--ink2);line-height:1.5;}
+
+/* ═══ REACTION TABLE ═══ */
+.rtable{width:100%;border-collapse:collapse;font-size:13px;margin:.8rem 0;}
+.rtable th{
+  background:var(--bg3);color:var(--orange);
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;padding:9px 14px;text-align:left;
+  border-bottom:1px solid rgba(0,200,240,.35);
+}
+.rtable td{
+  padding:9px 14px;border-bottom:1px solid rgba(0,200,240,.20);
+  color:var(--ink);vertical-align:middle;
+}
+.rtable tr:last-child td{border-bottom:none;}
+.rtable .tick{color:var(--green);font-size:15px;}
+.rtable .cross{color:var(--ink3);font-size:15px;}
+
+/* ═══ WORKED EXAMPLE CARDS ═══ */
+.worked-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;margin:1rem 0;overflow:hidden;
+}
+.worked-head{
+  background:var(--bg3);padding:.8rem 1.2rem;
+  display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;border-bottom:1px solid rgba(0,200,240,.20);
+  gap:.5rem;flex-wrap:wrap;
+}
+.worked-tag{
+  font-family:var(--mono);font-size:9px;
+  color:var(--orange);letter-spacing:.12em;text-transform:uppercase;
+}
+.worked-expand{
+  font-family:var(--mono);font-size:9px;
+  color:var(--ink3);letter-spacing:.08em;transition:color .18s;
+}
+.worked-head:hover .worked-expand{color:var(--cyan);}
+.worked-body{display:none;padding:1.2rem;}
+.worked-body.open{display:block;animation:fi .25s ease;}
+
+/* ═══ MISTAKE CARDS ═══ */
+.mistake-card{
+  background:var(--bg2);border:1px solid rgba(255,78,91,.30);
+  border-radius:10px;padding:1.1rem;
+}
+.mistake-card .mc-title{
+  font-family:var(--mono);font-size:10px;
+  color:var(--red);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:.5rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.mistake-card .mc-title::before{content:'✗';font-size:12px;}
+.mistake-card .mc-body{font-size:13px;color:var(--ink2);line-height:1.6;}
+.mistake-card .mc-fix{
+  font-size:12px;color:var(--green);margin-top:.5rem;
+  display:flex;align-items:flex-start;gap:.4rem;
+}
+.mistake-card .mc-fix::before{content:'✓';flex-shrink:0;margin-top:1px;}
+
+/* ═══ HERO ═══ */
+.hero{
+  position:relative;z-index:1;
+  max-width:900px;margin:0 auto;
+  padding:72px 1.5rem 56px;
+}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.18em;color:var(--orange);
+  border:1px solid rgba(255,122,26,.3);
+  background:rgba(255,122,26,.06);
+  padding:5px 14px;border-radius:20px;
+  margin-bottom:1.8rem;text-transform:uppercase;
+}
+.hero h1{
+  font-family:var(--display);
+  font-size:clamp(3rem,8vw,7rem);
+  line-height:1.0;letter-spacing:.03em;
+  background:linear-gradient(110deg,#E8F0F8 10%,#FF7A1A 55%,#FFB830 90%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1rem;
+}
+.hero-sub{
+  font-family:var(--serif);font-style:italic;
+  font-size:1.2rem;color:var(--ink2);
+  max-width:620px;margin-bottom:2rem;line-height:1.65;
+}
+.hero-stats{
+  display:flex;gap:2rem;flex-wrap:wrap;
+}
+.hstat{
+  text-align:left;
+}
+.hstat-num{
+  font-family:var(--display);font-size:2rem;
+  color:var(--orange);line-height:1;
+}
+.hstat-label{
+  font-family:var(--mono);font-size:9px;
+  color:var(--ink3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;
+}
+
+/* ═══ STEPPER ═══ */
+.stepper-wrap{
+  background:var(--bg2);border:1px solid rgba(0,200,240,.35);
+  border-radius:12px;overflow:hidden;margin:1rem 0;
+}
+.stepper-track{
+  display:flex;border-bottom:1px solid rgba(0,200,240,.20);
+  overflow-x:auto;scrollbar-width:none;
+}
+.stepper-track::-webkit-scrollbar{display:none;}
+.stab{
+  flex-shrink:0;padding:.7rem 1.1rem;
+  font-family:var(--mono);font-size:10px;
+  color:var(--ink3);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .18s;letter-spacing:.05em;
+  white-space:nowrap;
+}
+.stab:hover{color:var(--ink2);}
+.stab.act{color:var(--orange);border-bottom-color:var(--orange);background:rgba(255,122,26,.04);}
+.stepper-body{padding:1.2rem;}
+.s-content{display:none;}
+.s-content.show{display:block;animation:fi .22s ease;}
+
+/* ═══ EQUILIBRIUM SECTION ═══ */
+.eq-trio{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:1rem 0;
+}
+@media(max-width:600px){.eq-trio{grid-template-columns:1fr;}}
+.eq-card{
+  background:var(--bg2);border:1px solid rgba(0,200,240,.35);
+  border-radius:10px;padding:1.1rem;text-align:center;
+}
+.eq-card-name{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;color:var(--cyan);
+  text-transform:uppercase;margin-bottom:.5rem;
+}
+.eq-card .katex{font-size:1.2rem;}
+.eq-card-desc{
+  font-size:12px;color:var(--ink2);margin-top:.6rem;line-height:1.5;
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ═══ PROGRESS BAR (step) ═══ */
+.prog-dots{
+  display:flex;gap:6px;justify-content:center;
+  margin-bottom:.8rem;
+}
+.pdot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--ink3);border:1px solid var(--border);
+  transition:all .2s;cursor:pointer;
+}
+.pdot.act{background:var(--orange);border-color:var(--orange);}
+
+/* ═══ BACK LINK ═══ */
+.back-link{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:10px;
+  color:var(--ink3);text-decoration:none;
+  padding:7px 14px;border:1px solid var(--ink3);border-radius:6px;
+  margin-top:2rem;transition:all .2s;letter-spacing:.05em;
+}
+.back-link:hover{color:var(--orange);border-color:var(--orange);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">FBD</div>
+  <div class="topbar-title">FREE BODY DIAGRAMS · CEGE0101 DEEP DIVE</div>
+  <a href="#" class="topbar-back">← Back to Guide</a>
+</div>
+
+<!-- SIDE NAV -->
+<nav class="sidenav">
+  <div class="snav-dot act" data-label="What is an FBD?" data-sec="s-what" onclick="scrollSec('s-what',this)"></div>
+  <div class="snav-dot" data-label="The 3 Rules" data-sec="s-rules" onclick="scrollSec('s-rules',this)"></div>
+  <div class="snav-dot" data-label="Support Types" data-sec="s-supports" onclick="scrollSec('s-supports',this)"></div>
+  <div class="snav-dot" data-label="Forces & Loads" data-sec="s-forces" onclick="scrollSec('s-forces',this)"></div>
+  <div class="snav-dot" data-label="How to Draw" data-sec="s-howto" onclick="scrollSec('s-howto',this)"></div>
+  <div class="snav-dot" data-label="Equilibrium" data-sec="s-equil" onclick="scrollSec('s-equil',this)"></div>
+  <div class="snav-dot" data-label="Worked Examples" data-sec="s-worked" onclick="scrollSec('s-worked',this)"></div>
+  <div class="snav-dot" data-label="Common Mistakes" data-sec="s-mistakes" onclick="scrollSec('s-mistakes',this)"></div>
+  <div class="snav-dot" data-label="Quick Reference" data-sec="s-ref" onclick="scrollSec('s-ref',this)"></div>
+</nav>
+
+<!-- ════════════════════════ HERO ════════════════════════ -->
+<div class="hero" id="s-what">
+  <div class="hero-pill">CEGE0101 · Structural Mechanics</div>
+  <h1>FREE<br>BODY<br>DIAGRAMS</h1>
+  <p class="hero-sub">The single most important skill in structural mechanics. Every equilibrium calculation, every truss, every frame — it all starts here.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">3</div><div class="hstat-label">Equilibrium equations</div></div>
+    <div class="hstat"><div class="hstat-num">4</div><div class="hstat-label">Support types</div></div>
+    <div class="hstat"><div class="hstat-num">5</div><div class="hstat-label">Worked examples</div></div>
+    <div class="hstat"><div class="hstat-num">8</div><div class="hstat-label">Common mistakes</div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════ WHAT IS AN FBD ════════════════════════ -->
+<div class="section">
+  <div class="sec-kicker">Section 01</div>
+  <div class="sec-h2">What Is a Free Body Diagram?</div>
+  <div class="sec-sub">DEFINITION · PURPOSE · WHY IT MATTERS</div>
+
+  <p class="lead">A Free Body Diagram is a sketch of a body (or part of a body) that has been <em style="font-style:italic;color:var(--orange)">isolated</em> from its surroundings, with every force acting on it explicitly shown as an arrow.</p>
+
+  <div class="g2">
+    <div class="callout callout-key">
+      <strong>Key idea:</strong> Remove the object from its environment. Replace every contact point, support, and connection with the force or moment that point exerts on the body. Show ALL forces — including reactions and self-weight.
+    </div>
+    <div class="callout callout-info">
+      <strong>Why FBDs matter:</strong> Without an FBD you cannot write equilibrium equations correctly. Every reaction force, every joint analysis, every moment calculation requires knowing precisely what forces act on the body.
+    </div>
+  </div>
+
+  <div class="anim-box">
+    <div class="anim-label">Interactive — From Real Beam to FBD</div>
+    <canvas id="fbd-intro-canvas" width="760" height="200" style="max-width:100%"></canvas>
+    <div class="ctrl-row">
+      <button class="cbtn act" id="intro-b0" onclick="introStep(0)">Real Beam</button>
+      <button class="cbtn" id="intro-b1" onclick="introStep(1)">Isolate</button>
+      <button class="cbtn" id="intro-b2" onclick="introStep(2)">Add Reactions</button>
+      <button class="cbtn" id="intro-b3" onclick="introStep(3)">Add Loads</button>
+      <button class="cbtn" id="intro-b4" onclick="introStep(4)">Complete FBD</button>
+    </div>
+    <div class="anim-info" id="intro-info">The beam sits on a pin at A and a roller at B, with a point load at C.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════ THE 3 RULES ════════════════════════ -->
+<div class="section" id="s-rules">
+  <div class="sec-kicker">Section 02</div>
+  <div class="sec-h2">The 3 Golden Rules</div>
+  <div class="sec-sub">EVERY FBD MUST FOLLOW THESE</div>
+
+  <ol class="steps-list">
+    <li class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">ISOLATE THE BODY</div>
+        <div class="step-desc">Draw the object <strong>completely free</strong> from all supports, connections, and surrounding structure. Use a clear boundary (a dashed cut-line or just white space) to show it is isolated. The body itself can be a whole beam, a single joint, a section cut, or even a small element.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">REPLACE EVERY SUPPORT WITH ITS REACTIONS</div>
+        <div class="step-desc">Each support is removed and replaced with the forces (and moments) it applies to the body. A pin gives two force reactions. A roller gives one. A fixed support gives two forces and a moment. <strong>Do not leave any support in the diagram</strong> — the whole point is they are replaced.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">SHOW EVERY EXTERNAL FORCE AND MOMENT</div>
+        <div class="step-desc">Draw all applied loads (point loads, UDL, moments), self-weight if relevant, and any forces from connections to other bodies. Each force has a <strong>magnitude, direction, and point of application</strong>. Label everything — unknown reactions get a letter (e.g. \(R_A\), \(H_A\)).</div>
+      </div>
+    </li>
+  </ol>
+
+  <div class="callout callout-warn">
+    <strong>Critical:</strong> Internal forces (forces between two parts of the same body) do NOT appear on an FBD of the whole body. They only appear when you cut the body and draw FBDs of each piece separately.
+  </div>
+</div>
+
+<!-- ════════════════════════ SUPPORT TYPES ════════════════════════ -->
+<div class="section" id="s-supports">
+  <div class="sec-kicker">Section 03</div>
+  <div class="sec-h2">Support Types &amp; Their Reactions</div>
+  <div class="sec-sub">CLICK A SUPPORT TO SEE ITS FBD REACTIONS</div>
+
+  <div class="g4" id="support-grid">
+    <div class="support-card sel" id="sc-pin" onclick="showSupport('pin')">
+      <div class="support-card-title">Pin / Hinge</div>
+      <canvas id="sc-pin-c" width="160" height="110"></canvas>
+      <div class="support-card-desc">Prevents translation in both directions. Free to rotate.</div>
+    </div>
+    <div class="support-card" id="sc-roller" onclick="showSupport('roller')">
+      <div class="support-card-title">Roller</div>
+      <canvas id="sc-roller-c" width="160" height="110"></canvas>
+      <div class="support-card-desc">Prevents translation perpendicular to surface only.</div>
+    </div>
+    <div class="support-card" id="sc-fixed" onclick="showSupport('fixed')">
+      <div class="support-card-title">Fixed / Built-in</div>
+      <canvas id="sc-fixed-c" width="160" height="110"></canvas>
+      <div class="support-card-desc">Prevents all translation and rotation.</div>
+    </div>
+    <div class="support-card" id="sc-link" onclick="showSupport('link')">
+      <div class="support-card-title">Link / Two-Force</div>
+      <canvas id="sc-link-c" width="160" height="110"></canvas>
+      <div class="support-card-desc">Force acts along the axis of the link only.</div>
+    </div>
+  </div>
+
+  <div class="anim-box" style="margin-top:1.2rem">
+    <div class="anim-label">Support Detail — Reactions on the FBD</div>
+    <canvas id="support-detail-canvas" width="760" height="220" style="max-width:100%"></canvas>
+    <div class="anim-info" id="support-info">Pin support: provides a horizontal reaction H and a vertical reaction V. Two unknowns.</div>
+  </div>
+
+  <table class="rtable" style="margin-top:1.2rem">
+    <thead>
+      <tr>
+        <th>Support Type</th>
+        <th>Horiz. Reaction (H)</th>
+        <th>Vert. Reaction (V)</th>
+        <th>Moment Reaction (M)</th>
+        <th>No. of Unknowns</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Pin / Hinge</td><td class="tick">✓</td><td class="tick">✓</td><td class="cross">✗</td><td style="color:var(--amber);font-family:var(--mono)">2</td></tr>
+      <tr><td>Roller (vertical surface)</td><td class="cross">✗</td><td class="tick">✓</td><td class="cross">✗</td><td style="color:var(--amber);font-family:var(--mono)">1</td></tr>
+      <tr><td>Fixed / Built-in</td><td class="tick">✓</td><td class="tick">✓</td><td class="tick">✓</td><td style="color:var(--red);font-family:var(--mono)">3</td></tr>
+      <tr><td>Link / Two-force member</td><td colspan="2" style="color:var(--ink2);font-size:12px">Force along link axis only (1 component)</td><td class="cross">✗</td><td style="color:var(--green);font-family:var(--mono)">1</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info" style="margin-top:1rem">
+    <strong>Determinate vs Indeterminate:</strong> A structure is <em>statically determinate</em> if the total number of unknown reactions equals the number of independent equilibrium equations (3 for 2D). If unknowns &gt; 3, it is indeterminate and you need compatibility equations.
+  </div>
+</div>
+
+<!-- ════════════════════════ FORCES & LOADS ════════════════════════ -->
+<div class="section" id="s-forces">
+  <div class="sec-kicker">Section 04</div>
+  <div class="sec-h2">Forces &amp; Load Types</div>
+  <div class="sec-sub">WHAT GOES ON THE FBD</div>
+
+  <div class="anim-box">
+    <div class="anim-label">Load Type Explorer</div>
+    <canvas id="loads-canvas" width="760" height="200" style="max-width:100%"></canvas>
+    <div class="ctrl-row">
+      <button class="cbtn act" id="load-b1" onclick="showLoad(1)">Point Load</button>
+      <button class="cbtn" id="load-b2" onclick="showLoad(2)">UDL</button>
+      <button class="cbtn" id="load-b3" onclick="showLoad(3)">Varying Load</button>
+      <button class="cbtn" id="load-b4" onclick="showLoad(4)">Applied Moment</button>
+      <button class="cbtn" id="load-b5" onclick="showLoad(5)">Inclined Force</button>
+    </div>
+    <div class="anim-info" id="loads-info">A point load P acts at a single point. It has units of force (kN).</div>
+  </div>
+
+  <div class="g3" style="margin-top:1rem">
+    <div class="card">
+      <div class="card-title">Point Load</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">Single force \(P\) applied at one point. Units: kN. Drawn as a single arrow at the point of application. Causes both shear and bending.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">UDL (Uniform Distributed Load)</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">Load spread evenly over a length. Intensity \(w\) in kN/m. Resultant \(W = w \times L\) acts at the <strong style="color:var(--cyan)">midpoint</strong> of the loaded length for moment calculations.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Varying / Triangular Load</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">Intensity varies linearly from 0 to \(w_{\max}\). Resultant \(W = \frac{1}{2}w_{\max}L\) acts at the <strong style="color:var(--cyan)">centroid</strong> — \(\frac{2}{3}\) of the length from the zero end.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Applied Moment</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">A couple \(M\) applied at a point. Units: kNm. Drawn as a curved arrow. Contributes directly to moment equilibrium but not force equilibrium. Sign convention: clockwise positive (or state yours clearly).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Inclined Force</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">Must be <strong style="color:var(--orange)">resolved</strong> into horizontal and vertical components before writing equilibrium equations: \(F_x = F\cos\theta\), \(F_y = F\sin\theta\).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Self-Weight</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6">Acts downward at the centroid of the body. Often neglected in structural analysis problems unless the problem explicitly says to include it (\(W = mg\) or given as a UDL).</div>
+    </div>
+  </div>
+</div>
+<!-- ════════════════════════ HOW TO DRAW ════════════════════════ -->
+<div class="section" id="s-howto">
+  <div class="sec-kicker">Section 05</div>
+  <div class="sec-h2">How to Draw an FBD — Step by Step</div>
+  <div class="sec-sub">THE PROCEDURE EVERY TIME</div>
+
+  <div class="stepper-wrap">
+    <div class="stepper-track">
+      <div class="stab act" id="how-t0" onclick="howStep(0)">1. Identify</div>
+      <div class="stab" id="how-t1" onclick="howStep(1)">2. Sketch</div>
+      <div class="stab" id="how-t2" onclick="howStep(2)">3. Supports</div>
+      <div class="stab" id="how-t3" onclick="howStep(3)">4. Loads</div>
+      <div class="stab" id="how-t4" onclick="howStep(4)">5. Label</div>
+      <div class="stab" id="how-t5" onclick="howStep(5)">6. Verify</div>
+    </div>
+    <div class="stepper-body">
+      <div class="s-content show" id="how-s0">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 1 — IDENTIFY THE BODY</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">Decide exactly what object you are drawing the FBD for. This could be:
+        <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink2);font-size:14px;line-height:1.8">
+          <li>The <strong style="color:var(--ink)">entire beam or frame</strong> (to find support reactions)</li>
+          <li>A <strong style="color:var(--ink)">single joint</strong> in a truss (Method of Joints)</li>
+          <li>A <strong style="color:var(--ink)">section</strong> cut through the structure (Method of Sections)</li>
+          <li>An <strong style="color:var(--ink)">individual member</strong> of a frame</li>
+        </ul>
+        The choice determines which forces are internal vs external. A force is external if it crosses the boundary of your chosen body.</p>
+      </div>
+      <div class="s-content" id="how-s1">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 2 — SKETCH THE BODY IN ISOLATION</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">Draw the body by itself — no supports, no ground, no other members. Keep the geometry accurate (to scale or at least proportional). Draw a light dashed boundary if it helps show what has been removed. The body should "float" in space on your diagram.</p>
+        <div class="callout callout-key" style="margin-top:.8rem"><strong>Tip:</strong> Draw the body shape first, then add forces. Never draw force arrows before the body is sketched.</div>
+      </div>
+      <div class="s-content" id="how-s2">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 3 — ADD SUPPORT REACTIONS</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">At every point where a support was, draw the reaction force(s) and/or moment that support provides. Use <strong style="color:var(--ink)">assumed positive directions</strong> — if the answer comes out negative, the reaction acts the other way.</p>
+        <div class="g2" style="margin-top:.8rem">
+          <div class="callout callout-info"><strong>Pin at A:</strong> Draw \(H_A\) pointing right and \(V_A\) pointing up (both assumed positive).</div>
+          <div class="callout callout-info"><strong>Roller at B:</strong> Draw \(V_B\) pointing up only (no horizontal, no moment).</div>
+        </div>
+        <div class="callout callout-warn" style="margin-top:.5rem"><strong>Don't:</strong> Draw the triangular/pin symbol itself. The symbol represents the support in a structural diagram. In the FBD, you only draw the force arrows.</div>
+      </div>
+      <div class="s-content" id="how-s3">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 4 — ADD ALL EXTERNAL LOADS</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">Draw every applied load: point loads, UDLs (shown as a series of arrows with a line, or replaced by their resultant for moment calculation), applied moments, and self-weight if relevant.</p>
+        <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink2);font-size:14px;line-height:1.8">
+          <li>UDL of \(w\) kN/m over length \(L\): draw the distributed arrows, note the <strong style="color:var(--cyan)">resultant \(wL\) acts at \(L/2\)</strong></li>
+          <li>Inclined force: draw the force at the given angle, <strong style="color:var(--cyan)">resolve into components</strong> for the equilibrium equations</li>
+          <li>Applied moment: curved arrow at the point of application, labelled \(M\) with direction</li>
+        </ul>
+      </div>
+      <div class="s-content" id="how-s4">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 5 — LABEL EVERYTHING</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">Every force arrow needs a label. Known forces get their numerical value. Unknown reactions get algebraic symbols. Dimensions and distances must be marked — you need them for moment calculations.</p>
+        <div class="g3" style="margin-top:.8rem">
+          <div class="callout callout-good"><strong>Reactions:</strong> Use systematic notation — \(H_A\), \(V_A\), \(M_A\) for horizontal, vertical, moment at A.</div>
+          <div class="callout callout-good"><strong>Distances:</strong> Mark the x-position of every load and reaction. Moments need a lever arm.</div>
+          <div class="callout callout-good"><strong>Angles:</strong> If a load is inclined, mark \(\theta\) and the components \(F\cos\theta\), \(F\sin\theta\).</div>
+        </div>
+      </div>
+      <div class="s-content" id="how-s5">
+        <div class="step-title" style="font-family:var(--mono);font-size:12px;color:var(--orange);margin-bottom:.6rem">STEP 6 — VERIFY BEFORE SOLVING</div>
+        <p style="font-size:14px;color:var(--ink2);line-height:1.7">Before writing a single equilibrium equation, check:</p>
+        <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink2);font-size:14px;line-height:1.8">
+          <li>Does every support have its correct number of reactions? (Pin=2, Roller=1, Fixed=3)</li>
+          <li>Are all external loads shown, in the right direction, at the right position?</li>
+          <li>Is the body truly isolated — no support symbols remaining?</li>
+          <li>Count unknowns: for a simply-supported beam, you should have exactly 3 unknowns = 3 equations. ✓</li>
+          <li>Have you marked enough dimensions to write moment equations?</li>
+        </ul>
+        <div class="callout callout-good"><strong>If the FBD is correct, the algebra will work.</strong> Most equilibrium errors come from wrong FBDs, not wrong algebra.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive FBD builder -->
+  <div class="anim-box" style="margin-top:1.2rem">
+    <div class="anim-label">Live FBD Builder — Step Through Drawing</div>
+    <div class="prog-dots" id="fbdbuild-dots"></div>
+    <canvas id="fbdbuild-canvas" width="760" height="240" style="max-width:100%"></canvas>
+    <div class="ctrl-row">
+      <button class="cbtn" onclick="fbdPrev()">← Previous</button>
+      <button class="cbtn act" onclick="fbdNext()">Next Step →</button>
+    </div>
+    <div class="anim-info" id="fbdbuild-info"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════ EQUILIBRIUM ════════════════════════ -->
+<div class="section" id="s-equil">
+  <div class="sec-kicker">Section 06</div>
+  <div class="sec-h2">Equilibrium Equations</div>
+  <div class="sec-sub">WHAT THEY MEAN · HOW TO USE THEM · WORKED EXAMPLE</div>
+
+  <p class="lead">Static equilibrium means the body is not accelerating — it is either stationary or moving at constant velocity. Newton's second law says <strong style="color:var(--orange)">\(\sum \mathbf{F} = m\mathbf{a}\)</strong>, so if acceleration is zero, the net force must also be zero. In 2D this produces exactly three independent equations.</p>
+
+  <!-- ── THE 3 EQUATIONS WITH PHYSICAL MEANING ── -->
+  <div class="eq-trio">
+    <div class="eq-card">
+      <div class="eq-card-name">Equation 1 — No sideways motion</div>
+      <div>\[ \sum F_x = 0 \]</div>
+      <div class="eq-card-desc">The horizontal components of every force on the body must cancel out. If they don't, the body would accelerate left or right. Positive = rightward (→) by convention.</div>
+    </div>
+    <div class="eq-card">
+      <div class="eq-card-name">Equation 2 — No vertical motion</div>
+      <div>\[ \sum F_y = 0 \]</div>
+      <div class="eq-card-desc">The vertical components of every force must cancel out. If they don't, the body would accelerate up or down. Positive = upward (↑) by convention.</div>
+    </div>
+    <div class="eq-card">
+      <div class="eq-card-name">Equation 3 — No rotation</div>
+      <div>\[ \sum M_O = 0 \]</div>
+      <div class="eq-card-desc">The net turning effect about any chosen point O must be zero. If it isn't, the body would spin. You can choose any O — choosing it cleverly eliminates unknowns.</div>
+    </div>
+  </div>
+
+  <!-- ── WHY EXACTLY 3 ── -->
+  <div class="callout callout-info" style="margin:.8rem 0">
+    <strong>Why exactly 3 equations?</strong> In 2D, a rigid body has 3 degrees of freedom — it can translate in x, translate in y, and rotate. One equation is needed to constrain each degree of freedom. This is why a simply-supported beam (with a pin and a roller giving exactly 3 unknowns) is perfectly solvable: 3 equations, 3 unknowns.
+  </div>
+
+  <!-- ── CANVAS 1: WHAT BREAKS EQUILIBRIUM ── -->
+  <div class="anim-box">
+    <div class="anim-label">What happens when equilibrium is violated?</div>
+    <canvas id="equil-break-canvas" width="760" height="210" style="max-width:100%"></canvas>
+    <div class="ctrl-row">
+      <button class="cbtn act" id="eb-b0" onclick="showEquilBreak(0)">In Equilibrium ✓</button>
+      <button class="cbtn" id="eb-b1" onclick="showEquilBreak(1)">\(\sum F_y \neq 0\)</button>
+      <button class="cbtn" id="eb-b2" onclick="showEquilBreak(2)">\(\sum F_x \neq 0\)</button>
+      <button class="cbtn" id="eb-b3" onclick="showEquilBreak(3)">\(\sum M \neq 0\)</button>
+    </div>
+    <div class="anim-info" id="eb-info">All three equations are satisfied. The beam is in static equilibrium.</div>
+  </div>
+
+  <!-- ── MOMENT ARM ── -->
+  <div style="margin-top:1.6rem">
+    <div class="sec-h2" style="font-size:1.5rem;margin-bottom:.4rem">What Is a Moment?</div>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:.8rem">
+      A moment (or torque) is the <em style="color:var(--orange);font-style:normal">turning effect</em> of a force about a point. The further the force is from the pivot, the bigger the turning effect — the same reason a long spanner makes a bolt easier to undo. Mathematically:
+    </p>
+    <div class="fml">
+      <div class="fml-label">Moment of force \(F\) about point \(O\)</div>
+      \[ M_O = F \times d_{\perp} \]
+      <div style="font-size:12px;color:var(--ink3);margin-top:.3rem">where \(d_{\perp}\) is the <strong style="color:var(--cyan)">perpendicular distance</strong> from O to the line of action of F (the "lever arm")</div>
+    </div>
+    <div class="anim-box">
+      <div class="anim-label">Interactive — Moment Arm Visualiser</div>
+      <canvas id="moment-arm-canvas" width="760" height="230" style="max-width:100%"></canvas>
+      <div style="margin-top:.7rem;display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap;align-items:center">
+        <label style="font-size:12px;color:var(--ink2);font-family:var(--mono)">Force F (kN): <span id="ma-Fv">40</span>
+          <br><input type="range" id="ma-F" min="10" max="100" value="40" oninput="drawMomentArm()" style="width:120px"></label>
+        <label style="font-size:12px;color:var(--ink2);font-family:var(--mono)">Distance d (m): <span id="ma-dv">2.0</span>
+          <br><input type="range" id="ma-d" min="0.5" max="6" step="0.5" value="2" oninput="drawMomentArm()" style="width:120px"></label>
+        <label style="font-size:12px;color:var(--ink2);font-family:var(--mono)">Angle θ (°): <span id="ma-av">90</span>
+          <br><input type="range" id="ma-a" min="20" max="90" value="90" oninput="drawMomentArm()" style="width:120px"></label>
+      </div>
+      <div class="anim-info" id="ma-result"></div>
+    </div>
+  </div>
+
+  <!-- ── SIGN CONVENTION ── -->
+  <div style="margin-top:1.6rem">
+    <div class="sec-h2" style="font-size:1.5rem;margin-bottom:.4rem">Sign Convention</div>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:.8rem">
+      Before writing any equation you must decide what "positive" means. This is entirely your choice — but you must be consistent throughout the problem. The standard engineering convention is shown below. Notice that if you assume a direction and the answer comes out negative, that simply means the force acts in the opposite direction to what you assumed. That is not an error — it is the correct answer.
+    </p>
+    <div class="anim-box">
+      <div class="anim-label">Sign convention — forces and moments</div>
+      <canvas id="sign-canvas" width="760" height="170" style="max-width:100%"></canvas>
+    </div>
+    <div class="g2" style="margin-top:.6rem">
+      <div class="callout callout-good">
+        <strong>Good habit:</strong> At the top of every solution write your sign convention explicitly, e.g. "→ +ve, ↑ +ve, ACW +ve". This prevents errors when you have multiple moments with different directions.
+      </div>
+      <div class="callout callout-warn">
+        <strong>Common error:</strong> Changing sign convention halfway through a problem. If you start with anticlockwise = positive for \(\sum M\), every moment in that equation must follow the same rule.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHOOSING THE MOMENT POINT ── -->
+  <div style="margin-top:1.6rem">
+    <div class="sec-h2" style="font-size:1.5rem;margin-bottom:.4rem">Choosing Where to Take Moments</div>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:.8rem">
+      The moment equation \(\sum M_O = 0\) is valid about <em>any</em> point O in the plane — the fixed end of a beam, a free end, the midspan, even a point off the beam entirely. You always get a valid equation. But the <strong style="color:var(--orange)">smart choice</strong> is to pick O at a point where unknown forces act — because a force applied exactly at O has zero lever arm, so it drops out of the equation automatically, leaving you with fewer unknowns to solve for simultaneously.
+    </p>
+    <div class="anim-box">
+      <div class="anim-label">Click a point — see which unknowns are eliminated</div>
+      <canvas id="moment-pick-canvas" width="760" height="230" style="max-width:100%"></canvas>
+      <div class="ctrl-row">
+        <button class="cbtn act" id="mp-bA" onclick="showMomentPick('A')">Take moments about A</button>
+        <button class="cbtn" id="mp-bB" onclick="showMomentPick('B')">Take moments about B</button>
+        <button class="cbtn" id="mp-bC" onclick="showMomentPick('C')">Take moments about C</button>
+        <button class="cbtn" id="mp-bM" onclick="showMomentPick('M')">Take moments about midspan</button>
+      </div>
+      <div class="anim-info" id="mp-info"></div>
+    </div>
+  </div>
+
+  <!-- ── FULL WORKED NUMERICAL EXAMPLE ── -->
+  <div style="margin-top:1.8rem">
+    <div class="sec-h2" style="font-size:1.5rem;margin-bottom:.4rem">Fully Worked Numerical Example</div>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:.8rem">
+      Let's apply all three equations to a concrete problem and see exactly how each one is written and solved. Step through each stage to see the working build up on the diagram.
+    </p>
+    <div class="anim-box">
+      <div class="anim-label">Step-by-step equilibrium solution</div>
+      <div class="prog-dots" id="equil-dots"></div>
+      <canvas id="equil-worked-canvas" width="760" height="260" style="max-width:100%"></canvas>
+      <div class="ctrl-row">
+        <button class="cbtn" onclick="equilPrev()">← Back</button>
+        <button class="cbtn act" onclick="equilNext()">Next →</button>
+      </div>
+      <div id="equil-equation-box" style="
+        background:var(--bg3);border:1px solid rgba(0,200,240,.2);border-radius:8px;
+        padding:.9rem 1.2rem;margin-top:.8rem;font-size:14px;line-height:1.9;
+        min-height:60px;color:var(--ink2);">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SIGN CONVENTION SUMMARY ── -->
+  <div style="margin-top:1.4rem">
+    <div class="sec-h2" style="font-size:1.4rem;margin-bottom:.5rem">Quick Sign Convention Reference</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Forces — standard convention</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.8">
+          Rightward \(\Rightarrow\) positive \(F_x\)<br>
+          Upward \(\Rightarrow\) positive \(F_y\)<br>
+          Downward loads (gravity) \(\Rightarrow\) negative \(F_y\)<br>
+          Leftward reactions \(\Rightarrow\) negative \(F_x\)
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Moments — standard convention</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.8">
+          Anticlockwise (ACW) \(\Rightarrow\) positive<br>
+          Clockwise (CW) \(\Rightarrow\) negative<br>
+          Moment = Force × perpendicular distance<br>
+          Always state the pivot point explicitly
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════ WORKED EXAMPLES ════════════════════════ -->
+<div class="section" id="s-worked">
+  <div class="sec-kicker">Section 07</div>
+  <div class="sec-h2">Worked Examples</div>
+  <div class="sec-sub">5 FULLY SOLVED PROBLEMS WITH FBDs</div>
+
+  <!-- Example 1 -->
+  <div class="worked-card">
+    <div class="worked-head" onclick="toggleWEx(this)">
+      <div>
+        <div class="worked-tag">EXAMPLE 1 · Simply Supported Beam</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:3px">Pin at A, roller at B, UDL + point load. Find all reactions.</div>
+      </div>
+      <div class="worked-expand">▼ expand</div>
+    </div>
+    <div class="worked-body">
+      <canvas id="ex1-canvas" width="720" height="200" style="max-width:100%;margin-bottom:1rem" class="ex-canvas"></canvas>
+      <p style="font-size:14px;color:var(--ink2);margin-bottom:1rem"><strong style="color:var(--ink)">Problem:</strong> A simply-supported beam AB of length 8 m. Pin at A, roller at B. UDL \(w = 15\) kN/m over the full span, plus a point load \(P = 40\) kN at \(x = 3\) m from A. Find \(H_A\), \(V_A\), \(V_B\).</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">STEP 1 — FBD</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.8rem">Isolate beam AB. Remove pin at A → reactions \(H_A\) (rightward +ve) and \(V_A\) (upward +ve). Remove roller at B → reaction \(V_B\) (upward +ve). Apply UDL (15 arrows over 8 m) and point load 40 kN↓ at x=3 m.</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">STEP 2 — EQUILIBRIUM</div>
+      <div class="fml"><div class="fml-label">\(\sum F_x = 0\)</div>\[ H_A = 0 \quad \text{(no horizontal loads)} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum M_A = 0\) (anticlockwise +ve, find \(V_B\))</div>\[ V_B \times 8 = 40 \times 3 + 15 \times 8 \times 4 \]<br>\[ V_B \times 8 = 120 + 480 = 600 \quad \Rightarrow \quad \boxed{V_B = 75\text{ kN}\uparrow} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum F_y = 0\) (find V_A)</div>\[ V_A + V_B = 40 + 15 \times 8 = 160\text{ kN} \]<br>\[ \boxed{V_A = 160 - 75 = 85\text{ kN}\uparrow} \]</div>
+      <div class="callout callout-good" style="margin-top:.8rem"><strong>Answer:</strong> \(H_A = 0\), \(V_A = 85\text{ kN}\uparrow\), \(V_B = 75\text{ kN}\uparrow\). Check: \(85 + 75 = 160 = 40 + 120\) ✓</div>
+    </div>
+  </div>
+
+  <!-- Example 2 -->
+  <div class="worked-card">
+    <div class="worked-head" onclick="toggleWEx(this)">
+      <div>
+        <div class="worked-tag">EXAMPLE 2 · Cantilever Beam</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:3px">Fixed wall at A, free end at B with point load. Find all reactions.</div>
+      </div>
+      <div class="worked-expand">▼ expand</div>
+    </div>
+    <div class="worked-body">
+      <canvas id="ex2-canvas" width="720" height="200" style="max-width:100%;margin-bottom:1rem" class="ex-canvas"></canvas>
+      <p style="font-size:14px;color:var(--ink2);margin-bottom:1rem"><strong style="color:var(--ink)">Problem:</strong> A cantilever beam fixed at A, length \(L = 5\) m. Point load \(P = 30\) kN↓ at free end B, plus UDL \(w = 10\) kN/m. Find \(H_A\), \(V_A\), \(M_A\).</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">FBD &amp; SOLUTION</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.8rem">Fixed support at A → 3 unknowns: \(H_A\), \(V_A\), \(M_A\). No other supports. Total vertical load = \(30 + 10 \times 5 = 80\) kN↓.</p>
+      <div class="fml"><div class="fml-label">\(\sum F_x = 0\)</div>\[ H_A = 0 \]</div>
+      <div class="fml"><div class="fml-label">\(\sum F_y = 0\)</div>\[ V_A = 30 + 10 \times 5 = \boxed{80\text{ kN}\uparrow} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum M_A = 0\) &ensp;ACW +ve — wall moment reaction</div>\[ M_A = 30 \times 5 + 10 \times 5 \times \frac{5}{2} = 150 + 125 = \boxed{275\text{ kNm (anticlockwise)}} \]</div>
+      <div class="callout callout-info" style="margin-top:.8rem"><strong>Note:</strong> The wall moment \(M_A\) opposes the hogging caused by the loads. It is a <em>reaction</em> moment — without it, the beam would rotate. This is the fixed support's third unknown.</div>
+    </div>
+  </div>
+
+  <!-- Example 3 -->
+  <div class="worked-card">
+    <div class="worked-head" onclick="toggleWEx(this)">
+      <div>
+        <div class="worked-tag">EXAMPLE 3 · Inclined Load</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:3px">Simply-supported beam with an angled point load. Resolve and find reactions.</div>
+      </div>
+      <div class="worked-expand">▼ expand</div>
+    </div>
+    <div class="worked-body">
+      <canvas id="ex3-canvas" width="720" height="200" style="max-width:100%;margin-bottom:1rem" class="ex-canvas"></canvas>
+      <p style="font-size:14px;color:var(--ink2);margin-bottom:1rem"><strong style="color:var(--ink)">Problem:</strong> SS beam, \(L = 6\) m. Pin at A (left), roller at B (right). An inclined force of 60 kN at 30° to the horizontal acts downward-right at x = 4 m from A. Find all reactions.</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">RESOLVE INCLINED FORCE FIRST</div>
+      <div class="fml">\[ F_x = 60\cos30° = 60 \times 0.866 = 51.96\text{ kN (rightward)} \]\[ F_y = 60\sin30° = 60 \times 0.5 = 30\text{ kN (downward)} \]</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin:.8rem 0 .6rem">FBD &amp; EQUILIBRIUM</div>
+      <div class="fml"><div class="fml-label">\(\sum F_x = 0\)</div>\[ H_A + 51.96 = 0 \quad \Rightarrow \quad \boxed{H_A = -51.96\text{ kN (i.e. leftward)}} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum M_A = 0\)</div>\[ V_B \times 6 = 30 \times 4 \quad \Rightarrow \quad \boxed{V_B = 20\text{ kN}\uparrow} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum F_y = 0\)</div>\[ V_A + V_B = 30 \quad \Rightarrow \quad \boxed{V_A = 10\text{ kN}\uparrow} \]</div>
+      <div class="callout callout-warn" style="margin-top:.8rem"><strong>Key:</strong> \(H_A\) came out negative — the pin at A actually pushes leftward, opposing the horizontal component of the inclined load. The assumed direction was wrong, but that is fine: the algebra corrects it automatically.</div>
+    </div>
+  </div>
+
+  <!-- Example 4 -->
+  <div class="worked-card">
+    <div class="worked-head" onclick="toggleWEx(this)">
+      <div>
+        <div class="worked-tag">EXAMPLE 4 · Truss (Whole FBD then Joint FBD)</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:3px">First draw FBD of entire truss, then FBD of a single joint.</div>
+      </div>
+      <div class="worked-expand">▼ expand</div>
+    </div>
+    <div class="worked-body">
+      <canvas id="ex4-canvas" width="720" height="220" style="max-width:100%;margin-bottom:1rem" class="ex-canvas"></canvas>
+      <p style="font-size:14px;color:var(--ink2);margin-bottom:1rem"><strong style="color:var(--ink)">Problem:</strong> Simple triangular truss: Pin A at (0,0), roller B at (4,0), apex C at (2,3). Load \(P = 60\) kN↓ at C. Draw: (a) FBD of entire truss, (b) FBD of joint C.</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">(a) WHOLE TRUSS FBD</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.7rem">Treat the entire truss as one rigid body. Replace pin at A with \(H_A\) and \(V_A\). Replace roller at B with \(V_B\). Apply 60 kN↓ at C. No internal member forces appear.</p>
+      <div class="fml"><div class="fml-label">\(\sum F_x = 0\)</div>\[ H_A = 0 \]</div>
+      <div class="fml"><div class="fml-label">\(\sum M_A = 0\)</div>\[ V_B \times 4 = 60 \times 2 \quad\Rightarrow\quad V_B = 30\text{ kN},\quad V_A = 30\text{ kN} \]</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin:.8rem 0 .6rem">(b) JOINT C FBD</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.7rem">Isolate joint C. The two members AC and BC are cut. Replace each cut member with the force it exerts on joint C (assume tension = force pulling away from joint, drawn outward). Apply external load 60 kN↓.</p>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.7rem">Member angle: \(\theta = \arctan(3/2) = 56.3°\) from horizontal.</p>
+      <div class="fml"><div class="fml-label">\(\sum F_y = 0\) at joint C</div>\[ F_{AC}\sin56.3° + F_{BC}\sin56.3° = 60 \quad\Rightarrow\quad F_{AC} = F_{BC} = \frac{60}{2\sin56.3°} = 36.1\text{ kN (C)} \]</div>
+      <div class="callout callout-info" style="margin-top:.8rem"><strong>Compression vs Tension:</strong> If the assumed direction (tension = arrow away from joint) gives a negative answer, the member is in compression. Compression means the member pushes on the joint — arrows point toward the joint on the FBD.</div>
+    </div>
+  </div>
+
+  <!-- Example 5 -->
+  <div class="worked-card">
+    <div class="worked-head" onclick="toggleWEx(this)">
+      <div>
+        <div class="worked-tag">EXAMPLE 5 · Portal Frame</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:3px">L-shaped frame with horizontal load. Internal hinge — requires two FBDs.</div>
+      </div>
+      <div class="worked-expand">▼ expand</div>
+    </div>
+    <div class="worked-body">
+      <canvas id="ex5-canvas" width="720" height="240" style="max-width:100%;margin-bottom:1rem" class="ex-canvas"></canvas>
+      <p style="font-size:14px;color:var(--ink2);margin-bottom:1rem"><strong style="color:var(--ink)">Problem:</strong> Rectangular portal frame: fixed at A (bottom-left), pin at D (bottom-right). Horizontal wind load \(H = 30\) kN at B (top-left corner) at height 4 m. Beam BD is 6 m wide. Find all support reactions.</p>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.1em;margin-bottom:.6rem">WHOLE FRAME FBD</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.7rem">Fixed at A: \(H_A\), \(V_A\), \(M_A\). Pin at D: \(H_D\), \(V_D\). Total unknowns = 5. But we only have 3 equations → statically indeterminate as drawn. For a simple case, treat as pin at A too or use the given answer approach.</p>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:.7rem">For a pin-at-A (2 unknowns) + pin-at-D (2 unknowns) = 4 unknowns, 3 equations → indeterminate by 1. If D is a roller (1 unknown): total = 3 unknowns → determinate. Assume D is a roller (vertical only):</p>
+      <div class="fml"><div class="fml-label">\(\sum F_x = 0\)</div>\[ H_A + 30 = 0 \quad\Rightarrow\quad H_A = -30\text{ kN (leftward)} \]</div>
+      <div class="fml"><div class="fml-label">\(\sum M_A = 0\) (taking moments about A)</div>\[ V_D \times 6 = 30 \times 4 = 120 \quad\Rightarrow\quad V_D = 20\text{ kN}\uparrow \]</div>
+      <div class="fml"><div class="fml-label">\(\sum F_y = 0\)</div>\[ V_A = -V_D = -20\text{ kN (downward, column in compression)} \]</div>
+      <div class="callout callout-key" style="margin-top:.8rem"><strong>Lesson:</strong> Drawing the FBD of the whole frame first gives the support reactions. Then, to find internal forces (AFD/SFD/BMD per member), draw individual member FBDs using Newton's 3rd law at joints.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ COMMON MISTAKES ════════════════════════ -->
+<div class="section" id="s-mistakes">
+  <div class="sec-kicker">Section 08</div>
+  <div class="sec-h2">Common Mistakes</div>
+  <div class="sec-sub">WHAT GOES WRONG AND HOW TO FIX IT</div>
+
+  <div class="g2">
+    <div class="mistake-card">
+      <div class="mc-title">Missing a reaction component</div>
+      <div class="mc-body">Drawing a pin support with only a vertical reaction (forgetting the horizontal). This leaves the FBD incomplete and equilibrium equations will not balance.</div>
+      <div class="mc-fix">Pin → always draw BOTH \(H_A\) and \(V_A\). Check: 2 unknowns at every pin.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Leaving the support symbol on the FBD</div>
+      <div class="mc-body">Drawing the triangle/pin/wall symbol instead of replacing it with force arrows. The FBD should show forces only — no support symbols.</div>
+      <div class="mc-fix">Remove every support symbol. Replace with correctly directed reaction arrows labelled algebraically.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Wrong resultant position for UDL</div>
+      <div class="mc-body">Applying the UDL resultant at the end of the loaded span instead of at its midpoint. This gives the wrong moment arm and wrong reactions.</div>
+      <div class="mc-fix">UDL resultant \(W = wL\) acts at \(L/2\) (the centroid of the load block). Triangular load resultant acts at \(2L/3\) from the zero end.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Not resolving inclined forces</div>
+      <div class="mc-body">Writing \(\sum F_y = 0\) with the full inclined force magnitude instead of just its vertical component.</div>
+      <div class="mc-fix">Always resolve: \(F_x = F\cos\theta\), \(F_y = F\sin\theta\). Do this before writing any equilibrium equation.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Taking moments about the wrong point</div>
+      <div class="mc-body">Taking \(\sum M\) about an arbitrary point that has no unknowns passing through it, creating an equation with 2 or 3 unknowns instead of 1.</div>
+      <div class="mc-fix">Always take moments about a point where unknown forces act. This eliminates them and gives a single-unknown equation directly.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Treating a roller as a pin</div>
+      <div class="mc-body">Adding a horizontal reaction at a roller support. A roller only prevents displacement perpendicular to its surface.</div>
+      <div class="mc-fix">Roller on horizontal surface → vertical reaction only. Roller on inclined surface → reaction perpendicular to that surface.</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Forgetting the wall moment at a fixed support</div>
+      <div class="mc-body">Drawing only \(H_A\) and \(V_A\) at a fixed support (treating it like a pin). Missing the moment reaction \(M_A\) means 3 equations, 2 unknowns — over-constrained, results wrong.</div>
+      <div class="mc-fix">Fixed support → 3 unknowns: \(H_A\), \(V_A\), \(M_A\). Always include the moment reaction arrow (curved).</div>
+    </div>
+    <div class="mistake-card">
+      <div class="mc-title">Sign errors in moment equation</div>
+      <div class="mc-body">Mixing up clockwise and anticlockwise moments or forgetting that a reaction on the opposite side of the pivot has a different sign to loads.</div>
+      <div class="mc-fix">State your sign convention clearly. Draw a + and − rotation direction on the diagram. Check every term: does this force rotate the body clockwise or anticlockwise about the pivot?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ QUICK REFERENCE ════════════════════════ -->
+<div class="section" id="s-ref">
+  <div class="sec-kicker">Section 09</div>
+  <div class="sec-h2">Quick Reference Card</div>
+  <div class="sec-sub">PRINT THIS · KNOW IT COLD</div>
+
+  <div class="g2" style="margin-bottom:1rem">
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="card-title">Equilibrium — Always 3 Equations</div>
+        <div class="fml" style="margin:.4rem 0">\[ \sum F_x = 0 \qquad \sum F_y = 0 \qquad \sum M_O = 0 \]</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Moment of a Force</div>
+        <div class="fml" style="margin:.4rem 0">\[ M = F \times d_\perp \]</div>
+        <div style="font-size:12px;color:var(--ink2)">where \(d_\perp\) is the perpendicular distance from the force line of action to the pivot.</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="card-title">Resolving an Inclined Force</div>
+        <div class="fml" style="margin:.4rem 0">\[ F_x = F\cos\theta \qquad F_y = F\sin\theta \]</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Distributed Load Resultant</div>
+        <div class="fml" style="margin:.4rem 0">\[ W_{\text{UDL}} = wL \quad\text{at}\quad \tfrac{L}{2} \]</div>
+        <div class="fml" style="margin:.4rem 0">\[ W_{\text{tri}} = \tfrac{1}{2}w_{\max}L \quad\text{at}\quad \tfrac{2L}{3}\text{ from zero end} \]</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="rtable">
+    <thead>
+      <tr><th>Support</th><th>Reactions</th><th>Unknowns</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Pin / Hinge</td><td>\(H,\, V\)</td><td style="font-family:var(--mono);color:var(--amber)">2</td><td>Can rotate freely</td></tr>
+      <tr><td>Roller</td><td>\(V\) only (⊥ to surface)</td><td style="font-family:var(--mono);color:var(--green)">1</td><td>Can slide along surface</td></tr>
+      <tr><td>Fixed / Built-in</td><td>\(H,\, V,\, M\)</td><td style="font-family:var(--mono);color:var(--red)">3</td><td>No rotation, no translation</td></tr>
+      <tr><td>Link</td><td>Force along link axis</td><td style="font-family:var(--mono);color:var(--green)">1</td><td>Two-force member</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-key" style="margin-top:1.2rem">
+    <strong>Determinacy check:</strong> For a 2D structure, count total unknowns \(r\). If \(r = 3\) → statically determinate and solvable. If \(r < 3\) → unstable (mechanism). If \(r > 3\) → statically indeterminate (need compatibility / additional equations).
+  </div>
+</div>
+
+<!-- ════════════════════════ JAVASCRIPT ════════════════════════ -->
+<script>
+/* ══ THEME COLOURS ══ */
+var C={
+  bg:'#030D1A',bg2:'#071525',bg3:'#0B1E35',
+  ink:'#F0ECFF',ink2:'#8AAAC8',ink3:'#5C7A98',
+  orange:'#FF7A1A',amber:'#FFB830',cyan:'#00C8F0',
+  green:'#2DFFA0',red:'#FF4E5B',violet:'#9B72FF'
+};
+
+/* ══ HELPERS ══ */
+function clr(ctx,w,h){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=C.bg2;ctx.fillRect(0,0,w,h);
+  // subtle grid
+  ctx.strokeStyle='rgba(0,200,240,0.07)';ctx.lineWidth=1;
+  for(var i=0;i<w;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,h);ctx.stroke();}
+  for(var j=0;j<h;j+=40){ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(w,j);ctx.stroke();}
+}
+function arr(ctx,x1,y1,x2,y2,hs){
+  hs=hs||10;var ang=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hs*Math.cos(ang-.42),y2-hs*Math.sin(ang-.42));
+  ctx.lineTo(x2-hs*Math.cos(ang+.42),y2-hs*Math.sin(ang+.42));
+  ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill();
+}
+function txt(ctx,s,x,y,col,sz,al){
+  ctx.fillStyle=col||C.ink;ctx.font=(sz||12)+'px "JetBrains Mono",monospace';
+  ctx.textAlign=al||'center';ctx.fillText(s,x,y);
+}
+function beam(ctx,x1,y,x2,col){
+  ctx.strokeStyle=col||'#3a4a7c';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+}
+function pinSupp(ctx,x,y,top){
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1.5;
+  var d=top?-18:18;
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-11,y+d);ctx.lineTo(x+11,y+d);ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+  ctx.strokeStyle=C.bg;ctx.lineWidth=1;ctx.stroke();
+  // ground hatch
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  for(var i=-16;i<=16;i+=8){ctx.beginPath();ctx.moveTo(x+i,y+d);ctx.lineTo(x+i-5,y+d+(top?-6:6));ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(x-16,y+d);ctx.lineTo(x+16,y+d);ctx.stroke();
+}
+function rollerSupp(ctx,x,y){
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-11,y+18);ctx.lineTo(x+11,y+18);ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.arc(x,y+22,5,0,Math.PI*2);ctx.strokeStyle=C.ink3;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-16,y+28);ctx.lineTo(x+16,y+28);ctx.stroke();
+  for(var i=-16;i<=16;i+=8){ctx.beginPath();ctx.moveTo(x+i,y+28);ctx.lineTo(x+i-5,y+34);ctx.stroke();}
+}
+function fixedWall(ctx,x,y,h){
+  ctx.fillStyle='#1a2a4a';ctx.fillRect(x-12,y-h/2,12,h);
+  ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-h/2);ctx.lineTo(x,y+h/2);ctx.stroke();
+  ctx.strokeStyle='rgba(0,200,240,.25)';ctx.lineWidth=1;
+  for(var i=y-h/2+5;i<y+h/2;i+=9){ctx.beginPath();ctx.moveTo(x,i);ctx.lineTo(x-9,i+8);ctx.stroke();}
+}
+function udlArrows(ctx,x1,x2,y,col,intensity){
+  col=col||C.cyan;intensity=intensity||20;
+  ctx.strokeStyle=col;ctx.lineWidth=1.5;
+  var n=Math.round((x2-x1)/22)+1;
+  for(var i=0;i<n;i++){
+    var xi=x1+i*(x2-x1)/(n-1||1);
+    arr(ctx,xi,y-intensity,xi,y-2,6);
+  }
+  ctx.beginPath();ctx.moveTo(x1,y-intensity);ctx.lineTo(x2,y-intensity);ctx.stroke();
+}
+
+/* ══ SCROLL NAV ══ */
+function scrollSec(id,dot){
+  var el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.snav-dot').forEach(function(d){d.classList.remove('act');});
+  if(dot)dot.classList.add('act');
+}
+window.addEventListener('scroll',function(){
+  var secs=['s-what','s-rules','s-supports','s-forces','s-howto','s-equil','s-worked','s-mistakes','s-ref'];
+  var dots=document.querySelectorAll('.snav-dot');
+  var best=-1,bestDist=Infinity;
+  secs.forEach(function(id,i){
+    var el=document.getElementById(id);if(!el)return;
+    var d=Math.abs(el.getBoundingClientRect().top-80);
+    if(d<bestDist){bestDist=d;best=i;}
+  });
+  dots.forEach(function(d,i){d.classList.toggle('act',i===best);});
+});
+
+/* ══ INTRO ANIMATION ══ */
+var introState=0;
+function introStep(s){
+  introState=s;
+  ['intro-b0','intro-b1','intro-b2','intro-b3','intro-b4'].forEach(function(id,i){
+    var b=document.getElementById(id);if(b)b.classList.toggle('act',i===s);
+  });
+  var msgs=[
+    'The beam sits on a pin at A and a roller at B, with a point load P at C and a UDL over the full span.',
+    'Step 1: Isolate the beam. Lift it free of all supports. The beam floats in space.',
+    'Step 2: Replace supports with reactions. Pin at A → H_A and V_A. Roller at B → V_B only.',
+    'Step 3: Add all external loads. The 40 kN point load at C and the 15 kN/m UDL over the whole span.',
+    'Complete FBD: 3 unknowns (H_A, V_A, V_B), 3 equations. Ready to solve.'
+  ];
+  document.getElementById('intro-info').textContent=msgs[s];
+  var cv=document.getElementById('fbd-intro-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var ax=80,bx=W-80,bmy=H/2+10,L=bx-ax;
+
+  if(s===0){
+    // Real beam with supports in place
+    pinSupp(ctx,ax,bmy);rollerSupp(ctx,bx,bmy);
+    beam(ctx,ax,bmy,bx);
+    udlArrows(ctx,ax,bx,bmy,C.cyan,22);
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,ax+L*0.45,bmy-42,ax+L*0.45,bmy-2,8);
+    txt(ctx,'40 kN',ax+L*0.45,bmy-46,C.red,11);
+    txt(ctx,'w = 15 kN/m',ax+L/2,bmy-36,C.cyan,10);
+    txt(ctx,'A',ax,bmy+40,C.amber,12);txt(ctx,'B',bx,bmy+40,C.amber,12);
+  } else if(s===1){
+    // Isolated beam, no supports
+    ctx.strokeStyle='rgba(255,122,26,.2)';ctx.lineWidth=1;ctx.setLineDash([8,5]);
+    ctx.strokeRect(ax-18,bmy-36,L+36,58);ctx.setLineDash([]);
+    txt(ctx,'ISOLATED BODY',ax+L/2,bmy-46,C.orange,9);
+    beam(ctx,ax,bmy,bx);
+    txt(ctx,'A',ax-14,bmy+4,C.amber,12);txt(ctx,'B',bx+14,bmy+4,C.amber,12);
+    // dots where supports were
+    ctx.beginPath();ctx.arc(ax,bmy,5,0,Math.PI*2);ctx.fillStyle='rgba(255,180,48,.3)';ctx.fill();
+    ctx.beginPath();ctx.arc(bx,bmy,5,0,Math.PI*2);ctx.fillStyle='rgba(255,180,48,.3)';ctx.fill();
+  } else if(s===2){
+    beam(ctx,ax,bmy,bx);
+    // Reactions
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,bmy+44,ax,bmy+6,8);txt(ctx,'Vₐ',ax,bmy+56,C.green,11);
+    arr(ctx,ax-36,bmy,ax-4,bmy,8);txt(ctx,'Hₐ',ax-48,bmy-8,C.green,11);
+    arr(ctx,bx,bmy+44,bx,bmy+6,8);txt(ctx,'V_B',bx,bmy+56,C.green,11);
+    txt(ctx,'A',ax-14,bmy-14,C.amber,12);txt(ctx,'B',bx+14,bmy-14,C.amber,12);
+    txt(ctx,'↑ Reactions replace supports',ax+L/2,bmy-28,C.orange,10);
+  } else if(s===3){
+    beam(ctx,ax,bmy,bx);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2;
+    arr(ctx,ax,bmy+44,ax,bmy+6,8);txt(ctx,'Vₐ',ax,bmy+56,C.green,10);
+    arr(ctx,ax-36,bmy,ax-4,bmy,8);txt(ctx,'Hₐ',ax-48,bmy-8,C.green,10);
+    arr(ctx,bx,bmy+44,bx,bmy+6,8);txt(ctx,'V_B',bx,bmy+56,C.green,10);
+    udlArrows(ctx,ax,bx,bmy,C.cyan,22);
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,ax+L*0.45,bmy-42,ax+L*0.45,bmy-2,8);
+    txt(ctx,'40 kN',ax+L*0.45,bmy-46,C.red,11);
+    txt(ctx,'w = 15 kN/m',ax+L/2,bmy-36,C.cyan,10);
+  } else {
+    // Complete FBD
+    beam(ctx,ax,bmy,bx);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,bmy+44,ax,bmy+6,8);txt(ctx,'Vₐ',ax,bmy+58,C.green,11);
+    arr(ctx,ax-36,bmy,ax-4,bmy,8);txt(ctx,'Hₐ',ax-54,bmy-8,C.green,11);
+    arr(ctx,bx,bmy+44,bx,bmy+6,8);txt(ctx,'V_B',bx,bmy+58,C.green,11);
+    udlArrows(ctx,ax,bx,bmy,C.cyan,22);
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,ax+L*0.45,bmy-42,ax+L*0.45,bmy-2,8);
+    txt(ctx,'40 kN ↓',ax+L*0.45,bmy-46,C.red,11);
+    txt(ctx,'15 kN/m',ax+L/2,bmy-36,C.cyan,10);
+    // Dimension
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ax,bmy-50);ctx.lineTo(bx,bmy-50);ctx.stroke();
+    txt(ctx,'8 m',ax+L/2,bmy-54,C.ink3,10);
+    // Label box
+    ctx.strokeStyle='rgba(45,255,160,.25)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.strokeRect(ax-60,bmy+65,L+120,22);ctx.setLineDash([]);
+    txt(ctx,'3 unknowns · 3 equations · Statically Determinate ✓',ax+L/2,bmy+80,C.green,10);
+    txt(ctx,'A',ax,bmy-14,C.amber,12);txt(ctx,'B',bx,bmy-14,C.amber,12);
+    txt(ctx,'C (x=3.6m)',ax+L*0.45,bmy+14,C.ink2,10);
+  }
+}
+
+/* ══ SUPPORT TYPE CARDS ══ */
+function drawSupportCard(canvasId,type){
+  var cv=document.getElementById(canvasId);if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg2;ctx.fillRect(0,0,W,H);
+  var cx=W/2,cy=H*0.5;
+  if(type==='pin'){
+    beam(ctx,cx-40,cy-8,cx+40,cy-8);pinSupp(ctx,cx,cy-8);
+    txt(ctx,'H + V',cx,H-10,C.green,9);
+  } else if(type==='roller'){
+    beam(ctx,cx-40,cy-8,cx+40,cy-8);rollerSupp(ctx,cx,cy-8);
+    txt(ctx,'V only',cx,H-10,C.green,9);
+  } else if(type==='fixed'){
+    beam(ctx,cx-10,cy,cx+50,cy);fixedWall(ctx,cx-10,cy,44);
+    txt(ctx,'H + V + M',cx+20,H-10,C.green,9);
+  } else if(type==='link'){
+    ctx.strokeStyle=C.violet;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(cx-30,cy+30);ctx.lineTo(cx+30,cy-30);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx-30,cy+30,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+    ctx.beginPath();ctx.arc(cx+30,cy-30,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+    txt(ctx,'Along axis',cx,H-10,C.green,9);
+  }
+}
+
+function showSupport(type){
+  ['pin','roller','fixed','link'].forEach(function(t){
+    document.getElementById('sc-'+t).classList.toggle('sel',t===type);
+  });
+  var cv=document.getElementById('support-detail-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var bx=100,blen=W-200,by=H/2+10,by2=by;
+
+  beam(ctx,bx,by2,bx+blen,by2);
+
+  if(type==='pin'){
+    // Draw: real setup left, FBD right
+    // Left: physical pin
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(bx,by2);ctx.lineTo(bx-11,by2+18);ctx.lineTo(bx+11,by2+18);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.arc(bx,by2,7,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+    ctx.strokeStyle=C.bg;ctx.lineWidth=1;ctx.stroke();
+    for(var i=-18;i<=18;i+=9){ctx.strokeStyle=C.ink3;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+i,by2+18);ctx.lineTo(bx+i-5,by2+24);ctx.stroke();}
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx-18,by2+18);ctx.lineTo(bx+18,by2+18);ctx.stroke();
+    // Right: FBD reactions
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,bx+blen,by2+48,bx+blen,by2+8,9);
+    arr(ctx,bx,by2+48,bx,by2+8,9);
+    arr(ctx,bx-44,by2,bx-6,by2,9);
+    txt(ctx,'Vₐ ↑',bx,by2+62,C.green,11);
+    txt(ctx,'Hₐ →',bx-44,by2-12,C.green,11);
+    txt(ctx,'V_B ↑',bx+blen,by2+62,C.green,11);
+    txt(ctx,'Pin support — 2 unknowns at A: Hₐ and Vₐ',W/2,22,C.orange,11);
+    txt(ctx,'(plus V_B at roller B)',W/2,38,C.ink2,10);
+    document.getElementById('support-info').textContent='Pin support: provides horizontal reaction H_A and vertical reaction V_A. 2 unknowns. Can rotate freely.';
+
+  } else if(type==='roller'){
+    rollerSupp(ctx,bx+blen,by2);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,bx,by2+48,bx,by2+8,9);arr(ctx,bx-44,by2,bx-6,by2,9);
+    arr(ctx,bx+blen,by2+48,bx+blen,by2+8,9);
+    txt(ctx,'Vₐ',bx,by2+62,C.green,11);txt(ctx,'Hₐ',bx-46,by2-12,C.green,11);
+    txt(ctx,'V_B only ↑',bx+blen,by2+62,C.green,11);
+    ctx.strokeStyle=C.red;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(bx+blen-40,by2+28);ctx.lineTo(bx+blen+40,by2+28);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'No H_B (roller)',bx+blen,by2+44,C.red,10);
+    txt(ctx,'Roller — 1 unknown: V_B only (no horizontal)',W/2,22,C.orange,11);
+    document.getElementById('support-info').textContent='Roller support: only vertical reaction V_B. No horizontal. No moment. 1 unknown. Can slide horizontally.';
+
+  } else if(type==='fixed'){
+    fixedWall(ctx,bx,by2,50);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,bx,by2+48,bx,by2+8,9);
+    arr(ctx,bx-48,by2,bx-8,by2,9);
+    // Moment arc
+    ctx.strokeStyle=C.violet;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(bx,by2-8,28,-Math.PI*0.1,Math.PI*0.75);ctx.stroke();
+    arr(ctx,bx+28*Math.cos(Math.PI*0.75)-2,by2-8+28*Math.sin(Math.PI*0.75)+2,
+        bx+28*Math.cos(Math.PI*0.75),by2-8+28*Math.sin(Math.PI*0.75),8);
+    txt(ctx,'Vₐ ↑',bx+12,by2+62,C.green,11);
+    txt(ctx,'Hₐ →',bx-60,by2-12,C.green,11);
+    txt(ctx,'Mₐ ↻',bx+46,by2-30,C.violet,11);
+    txt(ctx,'Fixed support — 3 unknowns: Hₐ, Vₐ, Mₐ (wall moment)',W/2,22,C.orange,11);
+    document.getElementById('support-info').textContent='Fixed support: prevents all motion. 3 unknowns: H_A, V_A, and a moment reaction M_A. No rotation, no translation.';
+
+  } else if(type==='link'){
+    var lx1=bx+blen*0.3,ly1=by2+50,lx2=bx+blen*0.5,ly2=by2;
+    ctx.strokeStyle=C.violet;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(lx1,ly1);ctx.lineTo(lx2,ly2);ctx.stroke();
+    ctx.beginPath();ctx.arc(lx1,ly1,7,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+    ctx.beginPath();ctx.arc(lx2,ly2,7,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+    var ang=Math.atan2(ly2-ly1,lx2-lx1);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,lx2,ly2,lx2+50*Math.cos(ang),ly2+50*Math.sin(ang),9);
+    arr(ctx,lx1,ly1,lx1-50*Math.cos(ang),ly1-50*Math.sin(ang),9);
+    txt(ctx,'F (along axis)',lx2+70*Math.cos(ang),ly2+70*Math.sin(ang)-8,C.green,10);
+    txt(ctx,'Link member — 1 unknown: force along its axis only',W/2,22,C.orange,11);
+    document.getElementById('support-info').textContent='Link (two-force member): force acts purely along the link axis. 1 unknown. Used in frames and trusses.';
+  }
+}
+
+/* ══ LOADS CANVAS ══ */
+function showLoad(n){
+  [1,2,3,4,5].forEach(function(i){
+    var b=document.getElementById('load-b'+i);if(b)b.classList.toggle('act',i===n);
+  });
+  var cv=document.getElementById('loads-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var bx=80,blen=W-160,by=H/2;
+  beam(ctx,bx,by,bx+blen,by);
+  pinSupp(ctx,bx,by);rollerSupp(ctx,bx+blen,by);
+
+  var msgs=[
+    'Point load P: a single concentrated force at one point. Always draw as a single arrow with label P (or value in kN).',
+    'UDL (w kN/m): uniformly distributed load. Draw as equally spaced arrows with a line on top. Resultant W = wL acts at the midpoint.',
+    'Triangular / varying load: intensity increases linearly. Resultant W = ½·w_max·L acts at 2L/3 from the zero end.',
+    'Applied moment M: draw as a curved arrow at the point of application. Label direction (CW or ACW) and magnitude in kNm.',
+    'Inclined force F at angle θ: must be resolved into F_x = F·cosθ and F_y = F·sinθ before writing equilibrium equations.'
+  ];
+  document.getElementById('loads-info').textContent=msgs[n-1];
+
+  if(n===1){
+    // Point load at x=0.4
+    var px=bx+blen*0.4;
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,px,by-54,px,by-2,9);
+    txt(ctx,'P = 50 kN',px,by-58,C.red,12);
+    ctx.strokeStyle='rgba(255,78,91,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(px,by-54);ctx.lineTo(px,by+30);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'Single point of application',px,by+44,C.ink2,10);
+
+  } else if(n===2){
+    udlArrows(ctx,bx,bx+blen,by,C.cyan,28);
+    txt(ctx,'w = 20 kN/m',bx+blen/2,by-40,C.cyan,12);
+    // Resultant arrow
+    ctx.strokeStyle=C.amber;ctx.lineWidth=2.5;
+    arr(ctx,bx+blen/2,by-60,bx+blen/2,by-2,9);
+    txt(ctx,'Resultant W=wL at L/2',bx+blen/2,by+18,C.amber,10);
+    txt(ctx,'↑ acts at midpoint',bx+blen/2,by+32,C.ink2,10);
+
+  } else if(n===3){
+    // Triangular load
+    var pts2=[];var n2=14;
+    for(var i=0;i<=n2;i++){
+      var t=i/n2,xi=bx+t*blen,hi=t*40;
+      pts2.push([xi,hi]);
+      if(hi>4){ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;arr(ctx,xi,by-hi-4,xi,by-2,5);}
+    }
+    ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(bx,by-1);
+    pts2.forEach(function(p){ctx.lineTo(p[0],by-p[1]);});ctx.stroke();
+    txt(ctx,'0',bx,by-6,C.ink2,10);txt(ctx,'w_max',bx+blen+6,by-42,C.cyan,11,'left');
+    var rx=bx+blen*2/3;
+    ctx.strokeStyle=C.amber;ctx.lineWidth=2;arr(ctx,rx,by-52,rx,by-2,8);
+    txt(ctx,'Resultant at 2L/3',rx,by+18,C.amber,10);
+
+  } else if(n===4){
+    // Applied moment
+    var mx=bx+blen*0.5,my=by;
+    ctx.strokeStyle=C.violet;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(mx,my,32,Math.PI*0.15,Math.PI*1.85);ctx.stroke();
+    arr(ctx,mx+32*Math.cos(Math.PI*1.85)-2,my+32*Math.sin(Math.PI*1.85)+2,
+        mx+32*Math.cos(Math.PI*1.85),my+32*Math.sin(Math.PI*1.85),9);
+    txt(ctx,'M = 80 kNm',mx,my-48,C.violet,12);
+    txt(ctx,'(anticlockwise)',mx,my-34,C.ink2,10);
+    ctx.beginPath();ctx.arc(mx,my,5,0,Math.PI*2);ctx.fillStyle=C.violet;ctx.fill();
+
+  } else if(n===5){
+    // Inclined force
+    var fx=bx+blen*0.45,fy=by;
+    var fang=-Math.PI*0.25;
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,fx+55*Math.cos(fang+Math.PI),fy+55*Math.sin(fang+Math.PI),fx+2,fy+2,9);
+    txt(ctx,'F = 70 kN',fx-42,fy-40,C.red,11);
+    txt(ctx,'θ=45°',fx-14,fy-24,C.ink2,10);
+    // Components
+    ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.setLineDash([4,3]);
+    arr(ctx,fx-52,fy,fx-2,fy,8);txt(ctx,'Fₓ = F·cos45°',fx-52,fy+16,C.cyan,10,'left');
+    ctx.strokeStyle=C.amber;
+    arr(ctx,fx,fy-52,fx,fy-2,8);txt(ctx,'Fᵧ = F·sin45°',fx+8,fy-28,C.amber,10,'left');
+    ctx.setLineDash([]);
+    // angle arc
+    ctx.strokeStyle='rgba(139,114,255,.5)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(fx,fy,30,Math.PI+fang,Math.PI,false);ctx.stroke();
+  }
+}
+
+/* ══ HOW TO DRAW STEPPER ══ */
+function howStep(n){
+  for(var i=0;i<6;i++){
+    var t=document.getElementById('how-t'+i);var s=document.getElementById('how-s'+i);
+    if(t)t.classList.toggle('act',i===n);
+    if(s)s.classList.toggle('show',i===n);
+  }
+}
+
+/* ══ FBD BUILD STEPPER ══ */
+var fbdStep=0;
+var fbdSteps=[
+  {title:'Problem Setup',info:'A beam AB, L=8m. Pin at A, roller at B. Load P=50kN at x=3m, UDL w=12kN/m over full span.'},
+  {title:'Step 1: Isolate',info:'Remove all supports. Beam floats freely. Mark joints A and B with dashed circles showing where supports were.'},
+  {title:'Step 2: Pin at A',info:'Replace pin at A with H_A (horizontal) and V_A (vertical). Both assumed positive (→ and ↑).'},
+  {title:'Step 3: Roller at B',info:'Replace roller at B with V_B (vertical only, ↑). No horizontal reaction at a roller.'},
+  {title:'Step 4: Add UDL',info:'Draw UDL arrows over full span. Resultant W=12×8=96 kN acts at x=4m (midspan).'},
+  {title:'Step 5: Add Point Load',info:'Draw 50 kN↓ at x=3m from A.'},
+  {title:'Complete FBD',info:'3 unknowns (H_A, V_A, V_B) = 3 equations (ΣFx, ΣFy, ΣM). Statically determinate ✓. Now write equilibrium.'},
+];
+
+function renderFBDBuild(){
+  var dots=document.getElementById('fbdbuild-dots');
+  dots.innerHTML='';
+  fbdSteps.forEach(function(_,i){
+    var d=document.createElement('div');d.className='pdot'+(i===fbdStep?' act':'');
+    d.onclick=(function(ii){return function(){fbdStep=ii;renderFBDBuild();};})(i);
+    dots.appendChild(d);
+  });
+  var cv=document.getElementById('fbdbuild-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var ax=90,bx=W-90,by=H/2+5,L=bx-ax;
+  var s=fbdStep;
+  // Draw beam
+  beam(ctx,ax,by,bx,by);
+  // Title
+  txt(ctx,'['+s+'/6] '+fbdSteps[s].title,W/2,22,C.orange,11);
+
+  if(s>=1){
+    // Isolation circles
+    ctx.strokeStyle='rgba(255,122,26,.25)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.arc(ax,by,16,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(bx,by,16,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+    txt(ctx,'A',ax,by+30,C.amber,12);txt(ctx,'B',bx,by+30,C.amber,12);
+  } else {
+    pinSupp(ctx,ax,by);rollerSupp(ctx,bx,by);
+    txt(ctx,'A',ax,by+44,C.amber,12);txt(ctx,'B',bx,by+44,C.amber,12);
+  }
+
+  if(s>=2){
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,by+46,ax,by+8,9);txt(ctx,'Vₐ',ax,by+60,C.green,11);
+    arr(ctx,ax-44,by,ax-6,by,9);txt(ctx,'Hₐ',ax-58,by-10,C.green,11);
+  }
+  if(s>=3){
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,bx,by+46,bx,by+8,9);txt(ctx,'V_B',bx,by+60,C.green,11);
+  }
+  if(s>=4){
+    udlArrows(ctx,ax,bx,by,C.cyan,22);
+    txt(ctx,'w=12 kN/m',ax+L/2,by-30,C.cyan,10);
+    if(s>=6){
+      // Show resultant
+      ctx.strokeStyle=C.amber;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(ax+L/2,by-34);ctx.lineTo(ax+L/2,by-2);ctx.stroke();
+      ctx.setLineDash([]);
+      txt(ctx,'96kN',ax+L/2+22,by-22,C.amber,9);
+    }
+  }
+  if(s>=5){
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,ax+L*3/8,by-46,ax+L*3/8,by-2,9);
+    txt(ctx,'50 kN',ax+L*3/8,by-50,C.red,11);
+  }
+  if(s===6){
+    // Dimension line
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ax,by-60);ctx.lineTo(bx,by-60);ctx.stroke();
+    txt(ctx,'8.0 m',ax+L/2,by-64,C.ink3,10);
+    ctx.strokeStyle='rgba(45,255,160,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.strokeRect(ax-68,by+68,L+136,20);ctx.setLineDash([]);
+    txt(ctx,'ΣFₓ=0  ·  ΣFᵧ=0  ·  ΣMₐ=0  →  Hₐ=0, V_B=74 kN, Vₐ=72 kN',ax+L/2,by+82,C.green,10);
+  }
+  document.getElementById('fbdbuild-info').textContent=fbdSteps[s].info;
+}
+function fbdNext(){if(fbdStep<fbdSteps.length-1){fbdStep++;renderFBDBuild();}}
+function fbdPrev(){if(fbdStep>0){fbdStep--;renderFBDBuild();}}
+
+
+/* ══════════════════════════════════════════════════════
+   EQUILIBRIUM BREAK CANVAS  (760 × 210)
+   Shows physically what happens when each equation is violated
+══════════════════════════════════════════════════════ */
+function showEquilBreak(n){
+  [0,1,2,3].forEach(function(i){
+    var b=document.getElementById('eb-b'+i);
+    if(b)b.classList.toggle('act',i===n);
+  });
+  var cv=document.getElementById('equil-break-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+
+  var msgs=[
+    'EQUILIBRIUM: All three equations are satisfied — ΣFx=0, ΣFy=0, ΣM=0. The beam is completely still.',
+    'ΣFy ≠ 0: Vertical forces do not cancel. There is a net downward force, so the beam accelerates downward — it would fall through the supports.',
+    'ΣFx ≠ 0: Horizontal forces do not cancel. There is a net rightward push with nothing opposing it, so the beam slides sideways.',
+    'ΣM ≠ 0: The turning effects do not cancel. The load creates a clockwise moment with no counterbalancing moment, so the beam rotates about A.'
+  ];
+  document.getElementById('eb-info').textContent=msgs[n];
+
+  // Fixed beam geometry — all cases use same L, same load position
+  var ax=110,bx=W-110,by=92,L=bx-ax;
+  var loadX=ax+L*0.38; // load at ~38% of span
+
+  if(n===0){
+    // ── EQUILIBRIUM ── clean, everything balanced
+    beam(ctx,ax,by,bx,by);
+    pinSupp(ctx,ax,by);
+    rollerSupp(ctx,bx,by);
+
+    // Load down
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,loadX,by-50,loadX,by-2,9);
+    txt(ctx,'P=60 kN ↓',loadX,by-54,C.red,11);
+
+    // Reactions up — green, explicit values
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,by+46,ax,by+8,9);
+    arr(ctx,bx,by+46,bx,by+8,9);
+    txt(ctx,'Vₐ = 36 kN ↑',ax,by+60,C.green,10);
+    txt(ctx,'V_B = 24 kN ↑',bx,by+60,C.green,10);
+    // H_A=0
+    txt(ctx,'Hₐ = 0',ax-50,by-14,C.green,10);
+
+    // Balance equation strip at bottom
+    ctx.fillStyle='rgba(45,255,160,0.07)';ctx.fillRect(ax-70,by+74,L+140,26);
+    ctx.strokeStyle='rgba(45,255,160,0.3)';ctx.lineWidth=1;
+    ctx.strokeRect(ax-70,by+74,L+140,26);
+    txt(ctx,'ΣFₓ = 0 ✓   ΣFᵧ = 36+24−60 = 0 ✓   ΣMₐ = 24×5−60×2 = 0 ✓',
+        ax+L/2,by+91,C.green,10);
+
+  } else if(n===1){
+    // ── ΣFy ≠ 0 ── beam falls (draw everything displaced downward)
+    var fall=24;
+    // displaced beam
+    ctx.save();ctx.translate(0,fall);
+    beam(ctx,ax,by,bx,by);
+    ctx.restore();
+    // displaced supports (ghost)
+    ctx.strokeStyle='rgba(255,78,91,0.2)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(ax,by+fall+2);ctx.lineTo(ax-11,by+fall+20);ctx.lineTo(ax+11,by+fall+20);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx,by+fall+2);ctx.lineTo(bx-11,by+fall+20);ctx.lineTo(bx+11,by+fall+20);ctx.closePath();ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Load arrow (moves with beam)
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,loadX,by-46,loadX,by+fall,9);
+    txt(ctx,'P=60 kN ↓',loadX,by-50,C.red,11);
+
+    // Big red downward arrow showing acceleration
+    ctx.strokeStyle='rgba(255,78,91,0.7)';ctx.lineWidth=4;
+    arr(ctx,ax+L/2,by+fall+28,ax+L/2,by+fall+56,14);
+    txt(ctx,'Net force ↓  →  beam accelerates downward!',ax+L/2,by+fall+74,C.red,11);
+
+    // Cross-out box
+    ctx.strokeStyle='rgba(255,78,91,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.strokeRect(ax-70,by+fall+80,L+140,22);ctx.setLineDash([]);
+    txt(ctx,'ΣFᵧ = 0 − 60 = −60 ≠ 0  →  Missing Vₐ and V_B!',ax+L/2,by+fall+95,C.red,10);
+
+  } else if(n===2){
+    // ── ΣFx ≠ 0 ── beam slides right
+    var slide=26;
+    // displaced beam
+    ctx.save();ctx.translate(slide,0);
+    beam(ctx,ax,by,bx,by);
+    ctx.restore();
+    // Original ghost supports
+    ctx.strokeStyle='rgba(255,78,91,0.2)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(ax,by);ctx.lineTo(ax-11,by+18);ctx.lineTo(ax+11,by+18);ctx.closePath();ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Horizontal load (on displaced beam)
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,ax+slide+L*0.3,by,ax+slide+L*0.3+48,by,9);
+    txt(ctx,'H = 40 kN →',ax+slide+L*0.3+8,by-14,C.red,11);
+
+    // H_A shown but crossed out at pin
+    ctx.strokeStyle='rgba(45,255,160,0.25)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    arr(ctx,ax-46,by,ax-6,by,8);ctx.setLineDash([]);
+    txt(ctx,'H_A=0 (roller!)',ax-48,by+18,'rgba(255,78,91,0.6)',9,'left');
+
+    // Big rightward arrow
+    ctx.strokeStyle='rgba(255,78,91,0.7)';ctx.lineWidth=4;
+    arr(ctx,ax+L/2-8,by+44,ax+L/2+32,by+44,14);
+    txt(ctx,'Net force →  →  beam slides sideways!',ax+L/2,by+68,C.red,11);
+
+    ctx.fillStyle='rgba(255,78,91,0.07)';ctx.fillRect(ax-70,by+80,L+140,22);
+    ctx.strokeStyle='rgba(255,78,91,0.3)';ctx.lineWidth=1;ctx.strokeRect(ax-70,by+80,L+140,22);
+    txt(ctx,'ΣFₓ = +40 − 0 = 40 ≠ 0  →  Two rollers — no horizontal restraint!',
+        ax+L/2,by+95,C.red,10);
+
+  } else {
+    // ── ΣM ≠ 0 ── beam rotates about A
+    ctx.save();
+    ctx.translate(ax,by);ctx.rotate(0.13);ctx.translate(-ax,-by);
+    beam(ctx,ax,by,bx,by);
+    ctx.restore();
+
+    pinSupp(ctx,ax,by); // stays fixed (pivot)
+
+    // Load (at rotated position, approx)
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,loadX-4,by-50,loadX-4,by-2,9);
+    txt(ctx,'P=60 kN ↓',loadX+10,by-50,C.red,11);
+
+    // V_A shown
+    ctx.strokeStyle=C.green;ctx.lineWidth=2;
+    arr(ctx,ax,by+46,ax,by+8,8);
+    txt(ctx,'Vₐ ↑',ax+12,by+60,C.green,10);
+
+    // V_B crossed out
+    ctx.strokeStyle='rgba(255,78,91,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    arr(ctx,bx,by+46,bx,by+8,8);ctx.setLineDash([]);
+    txt(ctx,'V_B = 0',bx,by+60,'rgba(255,78,91,0.6)',10);
+
+    // Rotation arrow
+    ctx.strokeStyle='rgba(255,78,91,0.7)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(ax,by,55,0.1,1.2,false);ctx.stroke();
+    arr(ctx,ax+55*Math.cos(1.2)-1,by+55*Math.sin(1.2)+1,
+        ax+55*Math.cos(1.25),by+55*Math.sin(1.25),10);
+    txt(ctx,'ROTATES ↻',ax+72,by+52,C.red,11,'left');
+
+    ctx.fillStyle='rgba(255,78,91,0.07)';ctx.fillRect(ax-70,by+80,L+140,22);
+    ctx.strokeStyle='rgba(255,78,91,0.3)';ctx.lineWidth=1;ctx.strokeRect(ax-70,by+80,L+140,22);
+    txt(ctx,'ΣMₐ = Vₐ×0 + 0×5 − 60×3.8 = −228 kNm ≠ 0  →  No moment balance!',
+        ax+L/2,by+95,C.red,10);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   MOMENT ARM CANVAS  (760 × 230)
+   Pivot O at left-centre. Arm extends right. Force at angle θ from vertical.
+   Key teaching: M = F × d⊥   where d⊥ = d·sinθ
+══════════════════════════════════════════════════════ */
+function drawMomentArm(){
+  var F   = +document.getElementById('ma-F').value;
+  var d   = +document.getElementById('ma-d').value;
+  var ang = +document.getElementById('ma-a').value; // degrees from perpendicular (90=pure vertical)
+  document.getElementById('ma-Fv').textContent = F;
+  document.getElementById('ma-dv').textContent = d.toFixed(1);
+  document.getElementById('ma-av').textContent = ang;
+
+  // d⊥ = d × sin(ang)  (maximum when ang=90°, zero when ang=0°)
+  var rad   = ang * Math.PI / 180;
+  var dPerp = +(d * Math.sin(rad)).toFixed(2);
+  var M     = +(F * dPerp).toFixed(1);
+
+  var cv = document.getElementById('moment-arm-canvas');if(!cv)return;
+  var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+  clr(ctx,W,H);
+
+  // ── Geometry ──
+  var ox = 130, oy = H/2 + 10;   // pivot O — centre-left
+  var sc = Math.min(52, (W*0.55 - ox) / 6); // scale px/m, keep arm within canvas
+  var ex = ox + d * sc;            // end of lever arm E
+  // ey = oy always (arm is horizontal)
+
+  // Force direction unit vector (canvas y-down):
+  //   ang=90 → force straight down = (0,+1)
+  //   ang=0  → force horizontal    = (+1, 0)  [along the arm — zero moment]
+  var fdx = Math.sin((90 - ang) * Math.PI / 180);  // = cos(rad)
+  var fdy = Math.cos((90 - ang) * Math.PI / 180);  // = sin(rad) ... wait
+  // Let me be explicit:
+  //   I want: at ang=90 → fdx=0, fdy=1 (straight down)
+  //           at ang=0  → fdx=1, fdy=0 (horizontal)
+  // (90-ang)*PI/180:  at ang=90 → 0; cos(0)=1, sin(0)=0 → fdx=cos=1, fdy=sin=0 ✗
+  // Needs: fdx = sin(rad), fdy = cos(rad) ... 
+  //   at rad=PI/2 (ang=90): fdx=sin(PI/2)=1, fdy=cos(PI/2)=0 → (1,0) horizontal ✗
+  // Try: fdx = cos(PI/2 - rad) = sin(rad),  fdy = sin(PI/2 - rad) = cos(rad)
+  // Hmm. Let me just hard-code the mapping:
+  //   force angle from positive-x axis (canvas), measured anticlockwise (but canvas y-down so CW):
+  //   at ang=90: force is DOWN = angle 90° from +x in canvas = (cos90,sin90) = (0,1) ✓
+  //   at ang=45: force is at 45° from vertical = 45° from +y = angle (90+45=135°? or 90-45=45°?)
+  //              Let's say ang measures rotation from vertical TOWARD horizontal:
+  //              0° = straight down, 90° = horizontal (along arm, rightward)
+  //              So: fdx = sin(ang°), fdy = cos(ang°)
+  //   at ang=0:  fdx=0, fdy=1 → straight down ✓ ... but user slider says 90=perpendicular!
+  // 
+  // The slider label says "Angle θ (°)" and the description says "maximum when θ=90"
+  // So I'll redefine: ang is angle FROM perpendicular (i.e., from vertical downward)
+  //   ang=90 → force perpendicular to arm = straight down: fdx=0, fdy=1
+  //   ang=0  → force along arm = horizontal: fdx=1, fdy=0 (but that's along arm, d⊥=0)
+  // Mapping: fdx = cos(ang * PI/180), fdy = sin(ang * PI/180)
+  //   ang=90: fdx=cos90=0, fdy=sin90=1 → (0,1) straight down ✓
+  //   ang=0:  fdx=cos0=1,  fdy=sin0=0  → (1,0) horizontal ✓
+  //   ang=45: fdx=0.707, fdy=0.707 → diagonal ✓
+  // And dPerp = d * fdy = d * sin(ang) ← matches the formula above ✓
+  fdx = Math.cos(rad);  // = cos(ang°) — horizontal component of force direction
+  fdy = Math.sin(rad);  // = sin(ang°) — downward component of force direction
+  // Note: this means force points rightward AND downward, which is a bit odd.
+  // Better: force always has a downward component, tilt toward beam-end direction.
+  // For clarity let's keep force going down-right since arm points right.
+
+  var fLen = 58; // length of force arrow in px
+  // Start of force arrow: fLen away from E in the OPPOSITE direction of force
+  var fsx = ex - fLen * fdx;  // start x
+  var fsy = oy - fLen * fdy;  // start y (negative because going upward from E)
+  // Arrow goes from (fsx,fsy) → (ex,oy)
+
+  // Foot of perpendicular from O to force line-of-action:
+  //   Line passes through E=(ex,oy), direction=(fdx,fdy)
+  //   t = projection of (O-E) onto force direction
+  var t = (ox-ex)*fdx + (oy-oy)*fdy;  // oy-oy=0 always
+  t = (ox-ex)*fdx;
+  var footX = ex + t*fdx;
+  var footY = oy + t*fdy;
+  // d⊥ in pixels:
+  var dpPixels = Math.sqrt((ox-footX)*(ox-footX)+(oy-footY)*(oy-footY));
+
+  // ── Draw grid hint lines ──
+  ctx.strokeStyle='rgba(0,200,240,0.06)';ctx.lineWidth=1;
+  for(var xi=ox;xi<W-80;xi+=50){ctx.beginPath();ctx.moveTo(xi,20);ctx.lineTo(xi,H-20);ctx.stroke();}
+
+  // ── Lever arm line (dashed, extends past E) ──
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1.5;ctx.setLineDash([7,5]);
+  ctx.beginPath();ctx.moveTo(ox-20,oy);ctx.lineTo(ex+40,oy);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Lever arm label
+  txt(ctx,'d = '+d.toFixed(1)+' m',ox+(ex-ox)/2,oy+18,C.ink2,10);
+
+  // ── Pivot O ──
+  ctx.beginPath();ctx.arc(ox,oy,11,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,122,26,0.18)';ctx.fill();
+  ctx.strokeStyle=C.orange;ctx.lineWidth=2;ctx.stroke();
+  txt(ctx,'O',ox,oy+1,C.orange,12);
+  txt(ctx,'pivot',ox,oy+24,C.orange,9);
+
+  // ── E point (force application) ──
+  ctx.beginPath();ctx.arc(ex,oy,6,0,Math.PI*2);
+  ctx.fillStyle=C.red;ctx.fill();
+  txt(ctx,'E',ex,oy+18,C.red,10);
+
+  // ── Force arrow: from fsx,fsy  →  ex,oy ──
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,fsx,fsy,ex,oy,10);
+  txt(ctx,'F = '+F+' kN',fsx-4,fsy-12,C.red,11);
+
+  // ── Angle arc at E (between arm and force direction) ──
+  if(ang < 88){
+    // arc from force direction back to arm direction (rightward)
+    var forceAngle = Math.atan2(fdy, fdx);    // angle of force in canvas
+    var armAngle   = 0;                        // arm goes right → angle 0
+    ctx.strokeStyle='rgba(139,114,255,0.6)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(ex,oy,30,Math.PI+forceAngle,Math.PI,false);ctx.stroke();
+    txt(ctx,ang+'°',ex-46,oy-20,C.violet,10);
+  }
+
+  // ── Perpendicular distance d⊥ (cyan dashed line O → foot) ──
+  ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(footX,footY);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Right-angle mark at foot
+  if(dpPixels > 8){
+    var pAng = Math.atan2(footY-oy,footX-ox);
+    var s2 = 9;
+    var bpx = footX + s2*Math.cos(pAng);
+    var bpy = footY + s2*Math.sin(pAng);
+    ctx.strokeStyle=C.cyan;ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(bpx,bpy);
+    ctx.lineTo(bpx+s2*Math.cos(pAng-Math.PI/2), bpy+s2*Math.sin(pAng-Math.PI/2));
+    ctx.lineTo(footX+s2*Math.cos(pAng-Math.PI/2), footY+s2*Math.sin(pAng-Math.PI/2));
+    ctx.stroke();
+  }
+
+  // d⊥ label, positioned midway on the perpendicular line
+  var midPerpX = (ox+footX)/2, midPerpY = (oy+footY)/2;
+  // Offset label away from the line
+  var perpNormX = -(footY-oy)/Math.max(dpPixels,1);
+  var perpNormY =  (footX-ox)/Math.max(dpPixels,1);
+  txt(ctx,'d⊥='+dPerp+'m', midPerpX+perpNormX*22, midPerpY+perpNormY*22, C.cyan, 10);
+
+  // ── Formula result box (right side) ──
+  var bx2=W-168, by2=30, bw=155, bh=110;
+  ctx.fillStyle=C.bg3;ctx.fillRect(bx2,by2,bw,bh);
+  ctx.strokeStyle='rgba(0,200,240,0.25)';ctx.lineWidth=1.5;ctx.strokeRect(bx2,by2,bw,bh);
+
+  txt(ctx,'M = F · d⊥',bx2+bw/2,by2+22,C.cyan,13);
+  txt(ctx,'= '+F+' × '+dPerp,bx2+bw/2,by2+42,C.ink2,11);
+
+  ctx.fillStyle = (ang >= 89) ? C.green : C.amber;
+  ctx.font = 'bold 15px "JetBrains Mono",monospace';
+  ctx.textAlign='center';
+  ctx.fillText('= '+M+' kNm', bx2+bw/2, by2+66);
+
+  if(ang >= 89){
+    txt(ctx,'θ=90°: d⊥ = d (max)',bx2+bw/2,by2+84,C.green,9);
+    txt(ctx,'Maximum moment!',bx2+bw/2,by2+98,C.green,9);
+  } else if(ang <= 15){
+    txt(ctx,'Force ≈ along arm',bx2+bw/2,by2+84,'rgba(255,78,91,0.8)',9);
+    txt(ctx,'d⊥ ≈ 0  →  M ≈ 0',bx2+bw/2,by2+98,'rgba(255,78,91,0.8)',9);
+  } else {
+    txt(ctx,'θ<90°: d⊥ < d',bx2+bw/2,by2+84,C.amber,9);
+    txt(ctx,'Reduced moment',bx2+bw/2,by2+98,C.amber,9);
+  }
+
+  // Update text result
+  document.getElementById('ma-result').textContent =
+    'M = F × d⊥ = ' + F + ' × ' + dPerp + ' = ' + M + ' kNm.  ' +
+    (ang>=89
+      ? 'Force is perpendicular to the lever arm — this is the maximum moment for this F and d.'
+      : 'Force at '+ang+'° from perpendicular: d⊥ = d × sin('+ang+'°) = '+dPerp+' m. At 90° this would be '+(F*d).toFixed(0)+' kNm.');
+}
+
+/* ══════════════════════════════════════════════════════
+   SIGN CONVENTION CANVAS  (760 × 170)
+══════════════════════════════════════════════════════ */
+function drawSignCanvas(){
+  var cv=document.getElementById('sign-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+
+  var cy = H/2 + 5;  // centre row
+
+  /* ── Section 1: ΣFx ── (left third) */
+  var s1 = W * 0.14;
+  txt(ctx,'ΣFₓ = 0',s1,20,C.orange,11);
+  txt(ctx,'horizontal forces (Fₓ)',s1,33,C.ink2,9);
+
+  // +ve rightward
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,s1-46,cy,s1-8,cy,9);
+  txt(ctx,'+ve (positive)',s1-27,cy-16,C.green,10);
+  ctx.beginPath();ctx.arc(s1-27,cy,4,0,Math.PI*2);ctx.fillStyle=C.green;ctx.fill();
+
+  // −ve leftward
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,s1+46,cy,s1+8,cy,9);
+  txt(ctx,'−ve (negative)',s1+27,cy-16,C.red,10);
+  ctx.beginPath();ctx.arc(s1+27,cy,4,0,Math.PI*2);ctx.fillStyle=C.red;ctx.fill();
+
+  txt(ctx,'→ positive direction',s1,cy+22,C.ink2,9);
+
+  // Divider
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(W*0.31,14);ctx.lineTo(W*0.31,H-14);ctx.stroke();
+
+  /* ── Section 2: ΣFy ── (middle third) */
+  var s2 = W * 0.50;
+  txt(ctx,'ΣFᵧ = 0',s2,20,C.orange,11);
+  txt(ctx,'vertical forces (Fᵧ)',s2,33,C.ink2,9);
+
+  // +ve upward
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,s2-30,cy+38,s2-30,cy+6,9);
+  txt(ctx,'+ve (positive)',s2-14,cy+26,C.green,10);
+
+  // −ve downward
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,s2+30,cy-38,s2+30,cy-6,9);
+  txt(ctx,'−ve (negative)',s2+14,cy-26,C.red,10);
+
+  txt(ctx,'↑ positive direction',s2,cy+56,C.ink2,9);
+
+  // Divider
+  ctx.beginPath();ctx.moveTo(W*0.69,14);ctx.lineTo(W*0.69,H-14);ctx.stroke();
+
+  /* ── Section 3: ΣM ── (right third) */
+  var s3 = W * 0.835;
+  txt(ctx,'ΣM = 0',s3,20,C.orange,11);
+  txt(ctx,'turning effects (M)',s3,33,C.ink2,9);
+
+  // ACW = +ve (left circle, anticlockwise)
+  var c1x = s3 - 34, r1 = 26;
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  // Draw arc anticlockwise (false = CCW in canvas, but canvas arc is actually CW for positive angle)
+  // In canvas: arc(x,y,r,startAngle,endAngle,anticlockwise)
+  // anticlockwise=false draws clockwise in canvas screen coords (because y-axis is flipped)
+  // To draw an ACW arrow (left-hand curl): use anticlockwise=true in canvas
+  ctx.beginPath();
+  ctx.arc(c1x, cy, r1, 0.3, Math.PI*1.8, false);
+  ctx.stroke();
+  // Arrowhead at the end angle (Math.PI*1.8)
+  var ea1 = Math.PI*1.8;
+  var tx1 = c1x + r1*Math.cos(ea1), ty1 = cy + r1*Math.sin(ea1);
+  // Tangent direction at end (clockwise arc): perpendicular to radius, clockwise
+  var tang1x = Math.sin(ea1), tang1y = -Math.cos(ea1); // tangent for CW arc
+  // But we drew CW (false), so tangent at endpoint going CW:
+  arr(ctx, tx1-tang1x*1, ty1-tang1y*1, tx1+tang1x*8, ty1+tang1y*8, 8);
+  txt(ctx,'+ ve   ACW',c1x,cy-r1-12,C.green,10);
+
+  // CW = −ve (right circle, clockwise)
+  var c2x = s3 + 34, r2 = 26;
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.arc(c2x, cy, r2, Math.PI*0.3, Math.PI*2.1, true); // true = anticlockwise in canvas = CW visually? 
+  // Actually in canvas with y-down: arc with anticlockwise=true goes CCW in screen coords? 
+  // Let me use: anticlockwise=false goes CW-looking (which is "normal" positive direction)
+  // So to draw a CW arrow (which is our -ve), use anticlockwise=false but start/end different:
+  ctx.arc(c2x, cy, r2, Math.PI*1.8, 0.3, true);
+  ctx.stroke();
+  var ea2 = 0.3;
+  var tx2 = c2x + r2*Math.cos(ea2), ty2 = cy + r2*Math.sin(ea2);
+  var tang2x = -Math.sin(ea2), tang2y = Math.cos(ea2);
+  arr(ctx, tx2-tang2x*1, ty2-tang2y*1, tx2+tang2x*8, ty2+tang2y*8, 8);
+  txt(ctx,'− ve   CW',c2x,cy-r2-12,C.red,10);
+
+  txt(ctx,'Anticlockwise = +    Clockwise = −',s3,cy+r1+18,C.ink2,9);
+}
+
+/* ══════════════════════════════════════════════════════
+   MOMENT PICK CANVAS  (760 × 230)
+   Shows lever arms from each chosen pivot to each force
+══════════════════════════════════════════════════════ */
+function showMomentPick(pt){
+  ['A','B','C','M'].forEach(function(p){
+    var b=document.getElementById('mp-b'+p);if(b)b.classList.toggle('act',p===pt);
+  });
+  var cv=document.getElementById('moment-pick-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+
+  // Beam: pin A left, roller B right, 80kN at x=3m, L=8m
+  var ax=85, bx=W-85, by=H/2-10, L=bx-ax;
+  var cx3 = ax + L*(3/8);    // load at x=3m (3/8 of 8m)
+  var mx2 = ax + L/2;        // midspan at 4m
+
+  beam(ctx,ax,by,bx,by);
+  pinSupp(ctx,ax,by);
+  rollerSupp(ctx,bx,by);
+
+  // Load
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,cx3,by-46,cx3,by-2,9);
+  txt(ctx,'P = 80 kN ↓',cx3,by-50,C.red,11);
+
+  // Unknown reactions (always shown)
+  ctx.strokeStyle=C.green;ctx.lineWidth=2;
+  arr(ctx,ax,by+44,ax,by+8,8);
+  arr(ctx,ax-44,by,ax-6,by,8);
+  arr(ctx,bx,by+44,bx,by+8,8);
+  txt(ctx,'Vₐ',ax-4,by+58,C.green,11);
+  txt(ctx,'Hₐ',ax-52,by-12,C.green,11);
+  txt(ctx,'V_B',bx+4,by+58,C.green,11);
+
+  // Span labels
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ax,by-58);ctx.lineTo(bx,by-58);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax-4,by-64);ctx.lineTo(ax-4,by-52);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bx+4,by-64);ctx.lineTo(bx+4,by-52);ctx.stroke();
+  txt(ctx,'L = 8 m',ax+L/2,by-62,C.ink3,10);
+
+  // Choose pivot point
+  var pivX = (pt==='A')?ax : (pt==='B')?bx : (pt==='C')?cx3 : mx2;
+  var pivLabel = (pt==='M')?'mid':'O';
+
+  // Pivot circle
+  ctx.beginPath();ctx.arc(pivX,by,19,0,Math.PI*2);
+  ctx.strokeStyle=C.orange;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='rgba(255,122,26,0.12)';ctx.fill();
+  txt(ctx,pivLabel,pivX,by+1,C.orange,11);
+
+  // Forces and their lever arms
+  var forces=[
+    {x:ax,  label:'Vₐ', col:C.green, elim:(Math.abs(ax-pivX)<4)},
+    {x:ax,  label:'Hₐ', col:C.green, elim:true, note:'(horiz on horiz beam → arm=0)'},
+    {x:bx,  label:'V_B', col:C.green, elim:(Math.abs(bx-pivX)<4)},
+    {x:cx3, label:'80kN',col:C.red,   elim:(Math.abs(cx3-pivX)<4)},
+  ];
+
+  // Draw lever arm lines below beam
+  var armY = by + 72;
+  forces.forEach(function(f,i){
+    if(f.label==='Hₐ') return; // skip H_A visual arm
+    var larm = Math.abs(f.x - pivX);
+    var armMeters = (larm/L*8).toFixed(1);
+    var col = f.elim ? 'rgba(255,78,91,0.35)' : 'rgba(255,255,255,0.12)';
+    // Line from pivot down to arm level, and from force down to arm level
+    ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(pivX,by+4);ctx.lineTo(pivX,armY);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(f.x,by+4);ctx.lineTo(f.x,armY);ctx.stroke();
+    // Horizontal arm line
+    if(!f.elim && larm>4){
+      ctx.beginPath();ctx.moveTo(pivX,armY);ctx.lineTo(f.x,armY);ctx.stroke();
+      txt(ctx,armMeters+' m',(pivX+f.x)/2,armY+13,C.ink3,9);
+    } else if(f.elim){
+      txt(ctx,'arm = 0',f.x,armY+13,'rgba(255,78,91,0.55)',9);
+    }
+    ctx.setLineDash([]);
+  });
+
+  // Build equation string for info box
+  var eqs={
+    A: 'ΣM_A = 0:  H_A and V_A act AT A → lever arm = 0 → both disappear automatically.\nEquation has only one unknown: V_B × 8 − 80 × 3 = 0  →  V_B = 30 kN ↑  (solved in one line)',
+    B: 'ΣM_B = 0:  V_B acts AT B → arm = 0 → disappears. H_A is horizontal (arm = 0 for this beam).\nOnly one unknown: V_A × 8 − 80 × 5 = 0  →  V_A = 50 kN ↑  (solved in one line)',
+    C: 'ΣM_C = 0:  The 80 kN load acts AT C → arm = 0 → it disappears.\nBut BOTH V_A (arm 3m) and V_B (arm 5m) remain → two unknowns in one equation.\nNeed to combine with ΣFy = 0 → two equations, two unknowns. More steps needed.',
+    M: 'ΣM_midspan = 0 (pivot at 4m from A):  All forces have non-zero arms.\nV_A × 4 − 80 × 1 − V_B × 4 = 0 → still two unknowns. Need ΣFy as well.\nValid, but not the most efficient starting point.'
+  };
+  // Use innerHTML to support line breaks
+  var infoEl=document.getElementById('mp-info');
+  if(infoEl){
+    infoEl.innerHTML=eqs[pt].replace(/\n/g,'<br>');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EQUILIBRIUM WORKED CANVAS  (760 × 260)
+   Step-by-step: problem → FBD → ΣFx → ΣM_A → ΣFy → check
+══════════════════════════════════════════════════════ */
+var equilStep=0;
+var equilSteps=[
+  {
+    title:'Problem Setup',
+    eq:'<strong style="color:var(--orange)">Problem:</strong> Simply-supported beam AB, L = 5 m. Pin at A, roller at B.<br>Loads: point load <strong>P = 60 kN ↓</strong> at x = 2 m from A, plus UDL <strong>w = 10 kN/m</strong> over the full span.<br>Find the three reactions: H_A, V_A, and V_B.'
+  },
+  {
+    title:'Draw the FBD — identify all forces',
+    eq:'<strong style="color:var(--cyan)">FBD:</strong> Beam isolated. Supports replaced by reactions. Loads drawn explicitly.<br>• Pin at A → H_A (rightward assumed) and V_A (upward assumed)<br>• Roller at B → V_B only (upward assumed)<br>• UDL resultant: W = 10 × 5 = <strong>50 kN ↓</strong> acting at midspan (x = 2.5 m)<br>• Total unknowns = 3. Total equations = 3 → <strong style="color:var(--green)">statically determinate ✓</strong>'
+  },
+  {
+    title:'Equation 1 — ΣFx = 0',
+    eq:'<strong style="color:var(--green)">ΣFx = 0:</strong> Add up every horizontal force component on the beam.<br>The only horizontal force is H_A — all applied loads are vertical, and roller at B has no horizontal reaction.<br>\\[ \\sum F_x = 0 \\quad\\Rightarrow\\quad H_A = 0 \\]<br>Done. One unknown eliminated immediately. This is always the first equation to write.'
+  },
+  {
+    title:'Equation 2 — ΣM_A = 0 (find V_B)',
+    eq:'<strong style="color:var(--cyan)">ΣM_A = 0</strong> (anticlockwise positive): Pivot is at A, so H_A and V_A both act at A and have zero lever arm — they disappear from this equation. Only V_B and the two loads remain:<br>\\[ V_B \\times 5 \\;=\\; 60 \\times 2 \\;+\\; 50 \\times 2.5 \\]\\[ 5\\,V_B = 120 + 125 = 245 \\quad\\Rightarrow\\quad \\boxed{V_B = 49\\text{ kN}\\uparrow} \\]<br>One equation, one unknown — solved directly.'
+  },
+  {
+    title:'Equation 3 — ΣFy = 0 (find V_A)',
+    eq:'<strong style="color:var(--amber)">ΣFy = 0:</strong> All vertical forces must sum to zero. Upward = +ve, downward = −ve.<br>\\[ V_A + V_B - 60 - 50 = 0 \\]\\[ V_A = 110 - 49 = \\boxed{61\\text{ kN}\\uparrow} \\]<br>All three unknowns found: <strong>H_A = 0, V_A = 61 kN↑, V_B = 49 kN↑</strong>.'
+  },
+  {
+    title:'Verification — ΣM_B = 0 ✓',
+    eq:'<strong style="color:var(--green)">Check with ΣM_B = 0</strong> (a moment equation we did not use to solve):<br>\\[ V_A \\times 5 \\;-\\; 60 \\times 3 \\;-\\; 50 \\times 2.5 \\;=\\; 61 \\times 5 - 180 - 125 \\;=\\; 305 - 305 \\;=\\; 0 \\;\\checkmark \\]<br><strong style="color:var(--green)">Confirmed:</strong> H_A = 0 &ensp;·&ensp; V_A = 61 kN↑ &ensp;·&ensp; V_B = 49 kN↑<br><em style="color:var(--ink2)">Always verify with an unused equation — if it doesn\'t check out, there is an error somewhere.</em>'
+  }
+];
+
+function renderEquilWorked(){
+  // Progress dots
+  var dotsEl=document.getElementById('equil-dots');
+  dotsEl.innerHTML='';
+  equilSteps.forEach(function(_,i){
+    var d=document.createElement('div');d.className='pdot'+(i===equilStep?' act':'');
+    d.onclick=(function(ii){return function(){equilStep=ii;renderEquilWorked();};})(i);
+    dotsEl.appendChild(d);
+  });
+
+  var cv=document.getElementById('equil-worked-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var s=equilStep;
+
+  // Beam geometry
+  var ax=95, bx=W-95, by=H/2-10, L=bx-ax;
+  var loadX = ax + L*2/5;   // x=2m: 2/5 of 5m span
+  var udlX  = ax + L/2;     // x=2.5m: midspan (UDL resultant)
+
+  // Step label
+  txt(ctx,'['+s+'/5]  '+equilSteps[s].title, W/2, 20, C.orange, 11);
+
+  // Beam always shown
+  beam(ctx,ax,by,bx,by);
+
+  // ── Step 0: problem setup — supports in place ──
+  if(s===0){
+    pinSupp(ctx,ax,by);
+    rollerSupp(ctx,bx,by);
+    // Applied UDL
+    udlArrows(ctx,ax,bx,by,C.cyan,22);
+    txt(ctx,'w = 10 kN/m',ax+L/2,by-33,C.cyan,10);
+    // Applied point load
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,loadX,by-50,loadX,by-2,9);
+    txt(ctx,'P = 60 kN',loadX,by-54,C.red,11);
+    // Span dimension
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ax,by-64);ctx.lineTo(bx,by-64);ctx.stroke();
+    txt(ctx,'5.0 m',ax+L/2,by-68,C.ink3,10);
+    ctx.beginPath();ctx.moveTo(ax,by-70);ctx.lineTo(loadX,by-70);ctx.stroke();
+    txt(ctx,'2 m',ax+(loadX-ax)/2,by-78,C.ink3,9);
+    // Labels
+    txt(ctx,'A',ax,by+38,C.amber,12);
+    txt(ctx,'B',bx,by+38,C.amber,12);
+    txt(ctx,'Pin',ax,by+52,C.ink3,9);
+    txt(ctx,'Roller',bx,by+52,C.ink3,9);
+  }
+
+  // ── Step 1+: FBD — show reactions and UDL resultant ──
+  if(s>=1){
+    udlArrows(ctx,ax,bx,by,C.cyan,20);
+    txt(ctx,'w = 10 kN/m',ax+L/2,by-30,C.cyan,10);
+    ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+    arr(ctx,loadX,by-50,loadX,by-2,9);
+    txt(ctx,'P = 60 kN',loadX,by-54,C.red,11);
+    // UDL resultant (dashed)
+    ctx.strokeStyle=C.amber;ctx.lineWidth=2;ctx.setLineDash([5,3]);
+    arr(ctx,udlX,by-50,udlX,by-2,8);ctx.setLineDash([]);
+    txt(ctx,'W = 50 kN',udlX+36,by-42,C.amber,10,'left');
+    txt(ctx,'at 2.5m →',udlX+36,by-28,C.amber,9,'left');
+    // Reactions
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,by+46,ax,by+8,9);
+    arr(ctx,ax-46,by,ax-6,by,9);
+    arr(ctx,bx,by+46,bx,by+8,9);
+    txt(ctx,'Vₐ',ax,by+60,C.green,11);
+    txt(ctx,'Hₐ',ax-54,by-12,C.green,11);
+    txt(ctx,'V_B',bx,by+60,C.green,11);
+    txt(ctx,'A',ax,by+76,C.amber,11);
+    txt(ctx,'B',bx,by+76,C.amber,11);
+    // Span
+    ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ax,by-62);ctx.lineTo(bx,by-62);ctx.stroke();
+    txt(ctx,'5 m',ax+L/2,by-66,C.ink3,10);
+  }
+
+  // ── Step 2: highlight H_A ──
+  if(s===2){
+    ctx.strokeStyle=C.green;ctx.lineWidth=3;
+    arr(ctx,ax-50,by,ax-4,by,11);
+    ctx.beginPath();ctx.arc(ax-28,by,26,0,Math.PI*2);
+    ctx.strokeStyle=C.green;ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'Hₐ = 0',ax-28,by-36,C.green,12);
+    txt(ctx,'(no horizontal loads → Hₐ = 0)',ax-28,by-48,C.ink2,9);
+  }
+
+  // ── Step 3: ΣM_A — show pivot and lever arms ──
+  if(s===3){
+    // Pivot ring
+    ctx.beginPath();ctx.arc(ax,by,18,0,Math.PI*2);
+    ctx.strokeStyle=C.orange;ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,122,26,0.12)';ctx.fill();
+    txt(ctx,'O',ax,by+2,C.orange,11);
+
+    // Lever arm to V_B (5m)
+    ctx.strokeStyle='rgba(0,200,240,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(ax,by+12);ctx.lineTo(bx,by+12);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'5 m',ax+L/2,by+26,C.cyan,10);
+
+    // Lever arm to 60kN load (2m)
+    ctx.strokeStyle='rgba(255,122,26,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(ax,by-14);ctx.lineTo(loadX,by-14);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'2m',ax+(loadX-ax)/2,by-22,C.orange,9);
+
+    // Lever arm to UDL resultant (2.5m)
+    ctx.strokeStyle='rgba(255,180,48,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(ax,by-24);ctx.lineTo(udlX,by-24);ctx.stroke();ctx.setLineDash([]);
+    txt(ctx,'2.5m',ax+(udlX-ax)/2,by-32,C.amber,9);
+
+    // Result
+    txt(ctx,'→  V_B = 49 kN ↑',bx,by+46,C.cyan,11);
+  }
+
+  // ── Step 4: ΣFy — label each vertical force with sign ──
+  if(s===4){
+    ctx.strokeStyle=C.green;ctx.lineWidth=3;
+    arr(ctx,ax,by+50,ax,by+8,10);
+    var signs=[
+      {x:ax,  v:'+V_A', c:C.green},
+      {x:bx,  v:'+49',  c:C.green},
+      {x:loadX,v:'−60', c:C.red},
+      {x:udlX, v:'−50', c:C.red},
+    ];
+    signs.forEach(function(f){
+      ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+      ctx.beginPath();ctx.moveTo(f.x,by+8);ctx.lineTo(f.x,by+74);ctx.stroke();ctx.setLineDash([]);
+      txt(ctx,f.v,f.x,by+88,f.c,11);
+    });
+    txt(ctx,'Vₐ = 110 − 49 = 61 kN ↑',ax,by+106,C.amber,11,'left');
+  }
+
+  // ── Step 5: verified solution ──
+  if(s===5){
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+    arr(ctx,ax,by+46,ax,by+8,9);  txt(ctx,'Vₐ = 61 kN',ax,by+60,C.green,10);
+    arr(ctx,bx,by+46,bx,by+8,9);  txt(ctx,'V_B = 49 kN',bx,by+60,C.green,10);
+    txt(ctx,'Hₐ = 0',ax-44,by-14,C.green,10);
+    // Green verified box
+    ctx.fillStyle='rgba(45,255,160,0.07)';
+    ctx.fillRect(ax-70,by+72,L+140,28);
+    ctx.strokeStyle='rgba(45,255,160,0.35)';ctx.lineWidth=1;
+    ctx.strokeRect(ax-70,by+72,L+140,28);
+    txt(ctx,'ΣFᵧ: 61+49−60−50 = 0 ✓    ΣM_B: 61×5−60×3−50×2.5 = 0 ✓',
+        ax+L/2,by+90,C.green,10);
+  }
+
+  // Update KaTeX equation box
+  var eqEl=document.getElementById('equil-equation-box');
+  if(eqEl){
+    eqEl.innerHTML=equilSteps[s].eq;
+    if(window.renderMathInElement){
+      renderMathInElement(eqEl,{
+        delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+        throwOnError:false
+      });
+    }
+  }
+}
+function equilNext(){if(equilStep<equilSteps.length-1){equilStep++;renderEquilWorked();}}
+function equilPrev(){if(equilStep>0){equilStep--;renderEquilWorked();}}
+
+
+/* ══ WORKED EXAMPLE CANVASES ══ */
+function drawEx1(){
+  var cv=document.getElementById('ex1-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var ax=80,bx=W-80,by=H/2,L=bx-ax;
+  beam(ctx,ax,by,bx,by);pinSupp(ctx,ax,by);rollerSupp(ctx,bx,by);
+  udlArrows(ctx,ax,bx,by,C.cyan,24);
+  txt(ctx,'w=15kN/m',ax+L/2,by-36,C.cyan,11);
+  var px=ax+L*3/8;
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,px,by-52,px,by-2,9);
+  txt(ctx,'P=40kN',px,by-56,C.red,11);
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,ax,by+44,ax,by+6,8);txt(ctx,'Vₐ = 85 kN',ax,by+58,C.green,10);
+  arr(ctx,ax-42,by,ax-4,by,8);txt(ctx,'Hₐ = 0',ax-44,by-12,C.green,10);
+  arr(ctx,bx,by+44,bx,by+6,8);txt(ctx,'V_B = 75 kN',bx,by+58,C.green,10);
+  // dimensions
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ax,by-62);ctx.lineTo(bx,by-62);ctx.stroke();
+  txt(ctx,'8.0 m',ax+L/2,by-66,C.ink3,10);
+  ctx.beginPath();ctx.moveTo(ax,by-68);ctx.lineTo(px,by-68);ctx.stroke();
+  txt(ctx,'3m',ax+(px-ax)/2,by-72,C.amber,9);
+}
+
+function drawEx2(){
+  var cv=document.getElementById('ex2-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var ax=80,bx=W-80,by=H/2,L=bx-ax;
+  beam(ctx,ax,by,bx,by);fixedWall(ctx,ax,by,50);
+  udlArrows(ctx,ax,bx,by,C.cyan,22);
+  txt(ctx,'w = 10 kN/m',ax+L/2,by-34,C.cyan,11);
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;arr(ctx,bx,by-48,bx,by-2,9);
+  txt(ctx,'P=30kN',bx,by-52,C.red,11);
+  // Reactions
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,ax,by+44,ax,by+6,8);txt(ctx,'Vₐ = 80 kN',ax+8,by+58,C.green,10);
+  arr(ctx,ax-40,by,ax-4,by,8);txt(ctx,'Hₐ = 0',ax-44,by-12,C.green,10);
+  // Wall moment arc
+  ctx.strokeStyle=C.violet;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(ax,by,28,-Math.PI*0.05,Math.PI*0.8);ctx.stroke();
+  arr(ctx,ax+28*Math.cos(Math.PI*0.8),by+28*Math.sin(Math.PI*0.8),ax+28*Math.cos(Math.PI*0.82),by+28*Math.sin(Math.PI*0.82),8);
+  txt(ctx,'Mₐ = 275 kNm',ax+46,by-32,C.violet,10);
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ax,by-58);ctx.lineTo(bx,by-58);ctx.stroke();
+  txt(ctx,'5.0 m',ax+L/2,by-62,C.ink3,10);
+}
+
+function drawEx3(){
+  var cv=document.getElementById('ex3-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var ax=80,bx=W-80,by=H/2,L=bx-ax;
+  beam(ctx,ax,by,bx,by);pinSupp(ctx,ax,by);rollerSupp(ctx,bx,by);
+  // Inclined force
+  var fx=ax+L*2/3,fy=by;var fang=Math.PI/4;
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,fx+52*Math.cos(Math.PI-fang),fy-52*Math.sin(Math.PI-fang),fx+2,fy-2,9);
+  txt(ctx,'F=60kN',fx-44,fy-44,C.red,11);txt(ctx,'30°',fx-12,fy-22,C.ink2,10);
+  // Components dashed
+  ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  arr(ctx,fx-52,fy,fx-2,fy,7);txt(ctx,'Fx=52kN',fx-52,fy+14,C.cyan,9,'left');
+  ctx.strokeStyle=C.amber;arr(ctx,fx,fy-30,fx,fy-2,7);ctx.setLineDash([]);
+  txt(ctx,'Fy=30kN',fx+6,fy-16,C.amber,9,'left');
+  // Reactions
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,ax,by+44,ax,by+6,8);txt(ctx,'V_A=10kN',ax,by+58,C.green,10);
+  arr(ctx,ax-48,by,ax-6,by,8);txt(ctx,'H_A=52kN\u2190',ax-52,by-12,C.green,10);
+  arr(ctx,bx,by+44,bx,by+6,8);txt(ctx,'V_B=20kN',bx,by+58,C.green,10);
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ax,by-56);ctx.lineTo(bx,by-56);ctx.stroke();
+  txt(ctx,'6.0 m',ax+L/2,by-60,C.ink3,10);
+}
+
+function drawEx4(){
+  var cv=document.getElementById('ex4-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  // Draw whole truss left, joint FBD right
+  var off=30,ax=off+60,bx=off+W/2-30,by=H-48,cxj=off+(bx-ax)/2+ax-off,cyj=55;
+  // Truss members
+  ctx.strokeStyle='#3a5080';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(ax,by);ctx.lineTo(bx,by);ctx.stroke();
+  ctx.strokeStyle=C.violet;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(ax,by);ctx.lineTo(cxj,cyj);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(cxj,cyj);ctx.stroke();
+  // Joints
+  [ax,bx,cxj].forEach(function(x,i){
+    var y=i===2?cyj:by;
+    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+  });
+  txt(ctx,'A',ax,by+18,C.amber,11);txt(ctx,'B',bx,by+18,C.amber,11);txt(ctx,'C',cxj,cyj-16,C.amber,11);
+  pinSupp(ctx,ax,by);rollerSupp(ctx,bx,by);
+  ctx.strokeStyle=C.red;ctx.lineWidth=2;arr(ctx,cxj,cyj-38,cxj,cyj-2,8);txt(ctx,'P=60kN',cxj,cyj-42,C.red,10);
+  ctx.strokeStyle=C.green;ctx.lineWidth=2;
+  arr(ctx,ax,by+52,ax,by+10,7);txt(ctx,'Rₐ = 30 kN',ax,by+64,C.green,9);
+  arr(ctx,bx,by+52,bx,by+10,7);txt(ctx,'R_B = 30 kN',bx,by+64,C.green,9);
+  txt(ctx,'Whole Truss FBD',ax+(bx-ax)/2,22,C.orange,10);
+
+  // Joint C FBD (right side)
+  var jx=W*0.72,jy=H/2;
+  txt(ctx,'Joint C FBD',jx,22,C.orange,10);
+  ctx.strokeStyle='rgba(255,122,26,.2)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.arc(jx,jy,36,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  // Two member force arrows (tension = away from joint)
+  var ang2=Math.atan2(cyj-by,cxj-ax);
+  ctx.strokeStyle=C.violet;ctx.lineWidth=2.5;
+  arr(ctx,jx,jy,jx-50*Math.cos(ang2),jy+50*Math.sin(ang2+Math.PI),9);
+  arr(ctx,jx,jy,jx+50*Math.cos(ang2),jy+50*Math.sin(ang2+Math.PI),9);
+  txt(ctx,'F_AC',jx-62*Math.cos(ang2)-8,jy+62*Math.sin(ang2+Math.PI),C.violet,10);
+  txt(ctx,'F_BC',jx+62*Math.cos(ang2)+8,jy+62*Math.sin(ang2+Math.PI),C.violet,10);
+  ctx.strokeStyle=C.red;ctx.lineWidth=2;arr(ctx,jx,jy-46,jx,jy-2,8);txt(ctx,'P=60kN',jx,jy-50,C.red,10);
+  txt(ctx,'\u03b8=56.3\u00b0',jx+22,jy+26,C.ink2,9);
+  ctx.beginPath();ctx.arc(jx,jy,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+}
+
+function drawEx5(){
+  var cv=document.getElementById('ex5-canvas');if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  clr(ctx,W,H);
+  var fx=100,fy=H-48,fw=W*0.4,fh=H*0.65;
+  // Frame: columns A-B and D-E, beam B-D
+  var ax2=fx,ay2=fy,bx2=fx,by2=fy-fh,dx2=fx+fw,dy2=fy-fh;
+  // Draw frame
+  ctx.strokeStyle='#3a5080';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(ax2,ay2);ctx.lineTo(bx2,by2);ctx.stroke(); // column AB
+  ctx.beginPath();ctx.moveTo(bx2,by2);ctx.lineTo(dx2,dy2);ctx.stroke(); // beam BD
+  ctx.beginPath();ctx.moveTo(dx2,dy2);ctx.lineTo(dx2,ay2);ctx.stroke(); // column DE
+  // Fixed at A, roller at D
+  fixedWall(ctx,ax2,ay2,50);rollerSupp(ctx,dx2,ay2);
+  // Horizontal wind at B
+  ctx.strokeStyle=C.red;ctx.lineWidth=2.5;
+  arr(ctx,bx2-54,by2,bx2-4,by2,9);txt(ctx,'H=30kN',bx2-70,by2-12,C.red,11);
+  // Joints
+  ctx.beginPath();ctx.arc(bx2,by2,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+  ctx.beginPath();ctx.arc(dx2,dy2,6,0,Math.PI*2);ctx.fillStyle=C.amber;ctx.fill();
+  txt(ctx,'A',ax2-20,ay2,C.amber,11);txt(ctx,'B',bx2-18,by2-12,C.amber,11);
+  txt(ctx,'D',dx2+12,dy2-12,C.amber,11);txt(ctx,'E',dx2+14,ay2,C.amber,11);
+  // Reactions
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;
+  arr(ctx,ax2,ay2+50,ax2,ay2+8,8);txt(ctx,'V_A=20kN\u2193',ax2,ay2+64,C.green,10);
+  arr(ctx,ax2-46,ay2,ax2-8,ay2,8);txt(ctx,'H_A=30kN\u2190',ax2-52,ay2-12,C.green,10);
+  arr(ctx,dx2,ay2+50,dx2,ay2+8,8);txt(ctx,'V_D=20kN\u2191',dx2,ay2+64,C.green,10);
+  // Dimensions
+  ctx.strokeStyle=C.ink3;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ax2-30,ay2);ctx.lineTo(ax2-30,by2);ctx.stroke();
+  txt(ctx,'4m',ax2-42,(ay2+by2)/2,C.ink3,9);
+  ctx.beginPath();ctx.moveTo(bx2,by2-18);ctx.lineTo(dx2,dy2-18);ctx.stroke();
+  txt(ctx,'6m',(bx2+dx2)/2,by2-28,C.ink3,9);
+  // FBD label on right
+  txt(ctx,'Whole Frame FBD',fx+fw/2,22,C.orange,10);
+  txt(ctx,'3 unknowns: H_A, V_A, V_D',fx+fw/2+20,38,C.ink2,10);
+
+  // Wall moment at A (fixed)
+  ctx.strokeStyle=C.violet;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(ax2,ay2,24,-Math.PI*0.2,Math.PI*0.6);ctx.stroke();
+  arr(ctx,ax2+24*Math.cos(Math.PI*0.6),ay2+24*Math.sin(Math.PI*0.6),ax2+24*Math.cos(Math.PI*0.65),ay2+24*Math.sin(Math.PI*0.65),7);
+  txt(ctx,'M_A',ax2+36,ay2-24,C.violet,10);
+}
+
+/* ══ TOGGLE WORKED EXAMPLES ══ */
+function toggleWEx(head){
+  var body=head.nextElementSibling;
+  body.classList.toggle('open');
+  var exp=head.querySelector('.worked-expand');
+  if(exp)exp.textContent=body.classList.contains('open')?'▲ collapse':'▼ expand';
+  // Draw canvas when opening
+  if(body.classList.contains('open')){
+    var canvases=body.querySelectorAll('.ex-canvas');
+    canvases.forEach(function(cv){
+      var id=cv.id;
+      if(id==='ex1-canvas')drawEx1();
+      else if(id==='ex2-canvas')drawEx2();
+      else if(id==='ex3-canvas')drawEx3();
+      else if(id==='ex4-canvas')drawEx4();
+      else if(id==='ex5-canvas')drawEx5();
+    });
+    if(window.renderMathInElement)renderMathInElement(body,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+  }
+}
+
+/* ══ INIT ══ */
+window.addEventListener('load',function(){
+  introStep(0);
+  ['pin','roller','fixed','link'].forEach(function(t){drawSupportCard('sc-'+t+'-c',t);});
+  showSupport('pin');
+  showLoad(1);
+  renderFBDBuild();
+  showEquilBreak(0);
+  drawMomentArm();
+  drawSignCanvas();
+  showMomentPick('A');
+  renderEquilWorked();
+});
+</script>
